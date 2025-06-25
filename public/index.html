@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Action Figure Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #result {
+            display: none;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        #result img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .share-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .share-button {
+            padding: 8px 15px;
+            background-color: #3b5998;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .share-button.twitter {
+            background-color: #1DA1F2;
+        }
+        .share-button.linkedin {
+            background-color: #0077B5;
+        }
+        .share-button.email {
+            background-color: #D44638;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CRM Action Figure Generator</h1>
+    
+    <form id="generatorForm">
+        <div>
+            <label for="role">Your Role:</label>
+            <input type="text" id="role" name="role" required placeholder="e.g., Sales Manager, Marketing Director">
+        </div>
+        
+        <div>
+            <label for="painPoint">Your CRM Pain Point:</label>
+            <textarea id="painPoint" name="painPoint" required placeholder="Describe your biggest frustration with CRM systems"></textarea>
+        </div>
+        
+        <div>
+            <label for="crmPersonality">CRM Personality Type:</label>
+            <select id="crmPersonality" name="crmPersonality" required>
+                <option value="">Select a personality type</option>
+                <option value="Micromanager">Micromanager</option>
+                <option value="Data Hoarder">Data Hoarder</option>
+                <option value="Tech Avoider">Tech Avoider</option>
+                <option value="Process Obsessed">Process Obsessed</option>
+                <option value="Relationship Builder">Relationship Builder</option>
+                <option value="Efficiency Expert">Efficiency Expert</option>
+                <option value="Dashboard Addict">Dashboard Addict</option>
+                <option value="Automation Enthusiast">Automation Enthusiast</option>
+                <option value="Reluctant User">Reluctant User</option>
+                <option value="Other">Other (specify in pain point)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="image">Upload Your Photo (optional):</label>
+            <input type="file" id="image" name="image" accept="image/*">
+            <small>Your photo will be used to make the action figure resemble you</small>
+        </div>
+
+        <div class="form-group">
+            <label for="useGptImage">Image Generation Method:</label>
+            <select id="useGptImage" name="useGptImage">
+                <option value="false">Use DALL-E (Default)</option>
+                <option value="true">Use GPT (Experimental)</option>
+            </select>
+            <small>GPT method may produce different results than DALL-E</small>
+        </div>
+        
+        <div>
+            <label for="email">Your Email:</label>
+            <input type="email" id="email" name="email" required placeholder="your@email.com">
+        </div>
+        
+        <button type="submit">Generate My CRM Action Figure</button>
+    </form>
+    
+    <div id="loading">
+        <p>Generating your custom CRM action figure... This may take a minute.</p>
+    </div>
+    
+    <div id="result">
+        <h2 id="figureTitle"></h2>
+        <p id="figureQuote"></p>
+        <img id="figureImage" src="" alt="Generated CRM Action Figure">
+        
+        <div class="share-buttons">
+            <button class="share-button" id="downloadBtn">Download</button>
+            <button class="share-button twitter" id="twitterBtn">Share on Twitter</button>
+            <button class="share-button linkedin" id="linkedinBtn">Share on LinkedIn</button>
+            <button class="share-button email" id="emailBtn">Email</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generatorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const loadingDiv = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            
+            // Show loading message
+            loadingDiv.style.display = 'block';
+            loadingDiv.innerHTML = '<p>Generating your CRM action figure... This may take up to 30 seconds.</p>';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/generate-card', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Display the result
+                    document.getElementById('figureTitle').textContent = data.card.title;
+                    document.getElementById('figureQuote').textContent = `"${data.card.quote}"`;
+                    
+                    // Handle image loading
+                    const imgElement = document.getElementById('figureImage');
+                    
+                    // Set up image loading handlers
+                    imgElement.onload = function() {
+                        console.log('Image loaded successfully');
+                        resultDiv.style.display = 'block';
+                        loadingDiv.style.display = 'none';
+                    };
+                    
+                    imgElement.onerror = function() {
+                        console.error('Image failed to load');
+                        imgElement.src = 'https://via.placeholder.com/300?text=Image+Generation+Failed';
+                        imgElement.alt = 'Image generation failed';
+                        resultDiv.style.display = 'block';
+                        loadingDiv.style.display = 'none';
+                    };
+                    
+                    // Set image source after setting up handlers
+                    imgElement.src = data.card.imageUrl;
+                    
+                    // Set up share buttons
+                    document.getElementById('twitterBtn').addEventListener('click', () => {
+                        window.open(`https://twitter.com/intent/tweet?text=Check out my CRM Action Figure: ${encodeURIComponent(data.card.title)} - "${encodeURIComponent(data.card.quote)}"&url=${window.location.href}`, '_blank');
+                    });
+                    
+                    document.getElementById('linkedinBtn').addEventListener('click', () => {
+                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}`, '_blank');
+                    });
+                    
+                    document.getElementById('emailBtn').addEventListener('click', () => {
+                        window.location.href = `mailto:?subject=My CRM Action Figure&body=Check out my CRM Action Figure: ${encodeURIComponent(data.card.title)} - "${encodeURIComponent(data.card.quote)}". See it here: ${window.location.href}`;
+                    });
+                    
+                    document.getElementById('downloadBtn').addEventListener('click', () => {
+                        // Create a temporary link to download the image
+                        const link = document.createElement('a');
+                        link.href = data.card.imageUrl;
+                        link.download = `${data.card.title.replace(/\s+/g, '-')}-action-figure.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
+                    
+                } else {
+                    // Show error
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
+                    loadingDiv.style.display = 'none';
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<div class="error-message">An error occurred while generating the persona. Please try again.</div>`;
+                console.error(error);
+                loadingDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
