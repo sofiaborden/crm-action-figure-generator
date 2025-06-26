@@ -69,14 +69,12 @@ npm start
 ```
 crm-action-figure-project2/
 ├── api/                    # API endpoints and logic
-│   ├── generate-card.js    # Main card generation endpoint
-│   └── ...                 # Other API variations
+│   └── new-generate-card.js # Main card generation endpoint
 ├── public/                 # Static frontend files
 │   └── index.html         # Main application interface
 ├── uploads/               # User uploaded images
-├── data/                  # Data storage
-│   └── submissions.csv    # User submission records
-├── utils/                 # Utility functions
+├── logs/                  # Application logs
+├── submissions.csv        # User submission records
 ├── server.js             # Main server file
 ├── package.json          # Dependencies and scripts
 └── README.md             # This file
@@ -98,7 +96,7 @@ crm-action-figure-project2/
 
 ## 📊 Data Collection
 
-The application collects user submissions in `data/submissions.csv` including:
+The application collects user submissions in `submissions.csv` including:
 - Timestamp
 - User role and email
 - Pain points and personality type

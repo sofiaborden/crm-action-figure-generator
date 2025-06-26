@@ -3,7 +3,6 @@ require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -15,7 +14,7 @@ app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
 // Import the router
-const generateCardRouter = require('./api/generate-card');
+const generateCardRouter = require('./api/new-generate-card');
 
 // Log what we're importing
 console.log('Router type:', typeof generateCardRouter);
