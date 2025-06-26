@@ -43,6 +43,7 @@ const writer = csvWriter({
     {id: 'role', title: 'ROLE'},
     {id: 'painPoint', title: 'PAIN_POINT'},
     {id: 'crmPersonality', title: 'CRM_PERSONALITY'},
+    {id: 'genderPreference', title: 'GENDER_PREFERENCE'},
     {id: 'title', title: 'GENERATED_TITLE'},
     {id: 'quote', title: 'GENERATED_QUOTE'}
   ],
@@ -168,10 +169,10 @@ async function generateDallEImage(prompt, retries = 3) {
 router.post('/generate-card', upload.single('image'), async (req, res) => {
   try {
     console.log('Received request:', req.body);
-    const { role, painPoint, crmPersonality, email } = req.body;
+    const { role, painPoint, crmPersonality, email, genderPreference } = req.body;
     const uploadedImage = req.file ? await processUploadedImage(req.file) : null;
-    
-    if (!role || !painPoint || !crmPersonality || !email) {
+
+    if (!role || !painPoint || !crmPersonality || !email || !genderPreference) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -184,10 +185,12 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
     let completion;
     try {
       // Create the user prompt with optional photo description
-      let userPrompt = `Create a CRM action figure persona based on this role: ${role}, pain point: ${painPoint}, and personality: ${crmPersonality}.`;
+      let userPrompt = `Create a CRM action figure persona based on this role: ${role}, pain point: ${painPoint}, personality: ${crmPersonality}, and gender preference: ${genderPreference}.`;
 
       if (uploadedImage && uploadedImage.description) {
-        userPrompt += ` The action figure should resemble this person: ${uploadedImage.description}. Make sure the action figure reflects their actual appearance.`;
+        userPrompt += ` The action figure should resemble this person: ${uploadedImage.description}. Make sure the action figure reflects their actual appearance and gender preference.`;
+      } else {
+        userPrompt += ` The action figure should have a ${genderPreference} appearance.`;
       }
 
       userPrompt += ` Make it fun, creative and memorable - like a real action figure character!`;
@@ -260,21 +263,34 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             Role: ${role}
             Pain Point: ${painPoint}
             Personality: ${crmPersonality}
+            Gender Preference: ${genderPreference}
             Quote: "${persona.quote}"
             ${uploadedImage && uploadedImage.description ? `\nPerson's Appearance: ${uploadedImage.description}` : ''}
 
-            The prompt should describe a photorealistic 3D render of a CRM-themed toy action figure in vintage blister packaging labeled "Julep Confessionals".
+            CRITICAL REQUIREMENTS:
+            1. ALWAYS show a full-body action figure (never cut off body parts)
+            2. If no clothing is visible in photo, default to simple dark pants/outfit
+            3. Eyes must be consistent color and realistic (no multicolored or skin-colored eyes)
+            4. Gender appearance must match the specified preference: ${genderPreference}
 
-            IMPORTANT PROMPT GUIDELINES:
-            1. Start with "Photorealistic 3D render of a toy action figure in packaging"
-            2. Describe the figure as a professional product photo of a toy on store shelves
-            3. Mention "clear plastic blister packaging with cardboard backing"
-            4. Include specific details about the figure's pose, accessories, and expression
-            5. Describe the packaging design with "Julep Confessionals" logo at the top
-            6. Mention the quote appearing on a speech bubble on the packaging
-            7. End with "studio lighting, product photography, highly detailed"
-            ${uploadedImage && uploadedImage.description ? '8. IMPORTANT: Make sure the action figure matches the person\'s actual appearance described above' : '8. Keep the prompt under 400 characters'}
-            9. DO NOT use quotation marks in your prompt`
+            PACKAGING REQUIREMENTS:
+            1. Main brand title: "Julep Confessionals" at the top
+            2. Character title: "${persona.title}" prominently displayed
+            3. NO other text or wording on packaging
+            4. Consistent vintage toy packaging style
+
+            ACCESSORIES (2-4 total):
+            ${uploadedImage && uploadedImage.description ? '- 1 accessory based on uploaded image (sunglasses, jewelry, etc. if visible)' : ''}
+            - 1-2 CRM/nonprofit accessories (laptop, papers, phone, clipboard, etc.)
+            - Keep accessories simple and relevant
+
+            PROMPT STRUCTURE:
+            Start with "Photorealistic 3D render of a full-body toy action figure in clear plastic blister packaging with cardboard backing. Main title 'Julep Confessionals' at top, character name '${persona.title}' below. The ${genderPreference} action figure..."
+
+            End with "Studio lighting, professional product photography, highly detailed, consistent toy packaging style."
+
+            ${uploadedImage && uploadedImage.description ? 'IMPORTANT: Match the person\'s appearance but ensure full body and realistic eyes.' : 'Ensure full body figure with realistic proportions.'}
+            NO quotation marks in your response.`
           }
         ],
         temperature: 0.7,
@@ -285,13 +301,15 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       console.log('Generated DALL-E prompt:', dallePrompt);
     } catch (promptError) {
       console.error('Error generating DALL-E prompt:', promptError);
-      let fallbackPrompt = `Photorealistic 3D render of a toy action figure called "${persona.title}" in clear plastic blister packaging with cardboard backing labeled "Julep Confessionals". The figure represents a ${role} with ${crmPersonality} personality.`;
+      let fallbackPrompt = `Photorealistic 3D render of a full-body ${genderPreference} toy action figure in clear plastic blister packaging with cardboard backing. Main title "Julep Confessionals" at top, character name "${persona.title}" below. The figure represents a ${role} with ${crmPersonality} personality.`;
 
       if (uploadedImage && uploadedImage.description) {
-        fallbackPrompt += ` The action figure should look like: ${uploadedImage.description}.`;
+        fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with realistic matching eye color and full body visible.`;
+      } else {
+        fallbackPrompt += ` The ${genderPreference} figure has realistic proportions and consistent eye color.`;
       }
 
-      fallbackPrompt += ` Packaging includes the quote "${persona.quote}". Studio lighting, product photography, highly detailed.`;
+      fallbackPrompt += ` Includes 2-3 simple CRM accessories (laptop, papers, etc.). Studio lighting, professional product photography, highly detailed, consistent packaging style.`;
       dallePrompt = fallbackPrompt;
     }
     
@@ -307,6 +325,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         role,
         painPoint,
         crmPersonality,
+        genderPreference,
         title: persona.title,
         quote: persona.quote
       }]);

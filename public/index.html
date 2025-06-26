@@ -361,6 +361,17 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label for="genderPreference">Action Figure Appearance:</label>
+                        <select id="genderPreference" name="genderPreference" required>
+                            <option value="">Select appearance style...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Prefer not to specify">Prefer not to specify</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group full-width">
@@ -549,17 +560,15 @@
         function shareViaEmail() {
             if (!currentResult) return;
             const subject = `Check out my CRM Action Figure: ${currentResult.title}`;
-            const body = `I just created my CRM Action Figure!\n\nTitle: ${currentResult.title}\nQuote: "${currentResult.quote}"\n\nCreate your own at: ${window.location.href}`;
+            const body = `I just created my CRM Action Figure!\n\nTitle: ${currentResult.title}\nQuote: "${currentResult.quote}"\n\nView the image here: ${currentResult.imageUrl}\n\nCreate your own at: ${window.location.href}`;
             const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = url;
         }
 
         function downloadImage() {
             if (!currentResult) return;
-            const link = document.createElement('a');
-            link.href = currentResult.imageUrl;
-            link.download = `${currentResult.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_action_figure.jpg`;
-            link.click();
+            // Open image in new tab instead of direct download to preserve current page
+            window.open(currentResult.imageUrl, '_blank');
         }
     </script>
 </body>
