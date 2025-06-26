@@ -54,24 +54,55 @@ router.get('/test', (req, res) => {
   res.send('Router is working!');
 });
 
-// Helper function to process uploaded image if available
+// Helper function to process uploaded image and analyze it with OpenAI Vision
 async function processUploadedImage(file) {
   if (!file) return null;
-  
+
   try {
     // Read the file as base64
     const imageBuffer = fs.readFileSync(file.path);
     const base64Image = imageBuffer.toString('base64');
-    
-    // You could use this base64 image with OpenAI's API if needed
-    // For now, we'll just return the file path
+
+    // Use OpenAI Vision to analyze the uploaded photo
+    console.log('Analyzing uploaded photo with OpenAI Vision...');
+    const visionResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this photo and describe the person's appearance for creating an action figure. Focus on: gender, approximate age, hair color/style, eye color, facial features, and overall professional appearance. Be concise and specific."
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`
+              }
+            }
+          ]
+        }
+      ],
+      max_tokens: 300
+    });
+
+    const photoDescription = visionResponse.choices[0].message.content;
+    console.log('Photo analysis:', photoDescription);
+
     return {
       path: file.path,
-      base64: base64Image
+      base64: base64Image,
+      description: photoDescription
     };
   } catch (error) {
     console.error('Error processing uploaded image:', error);
-    return null;
+    // Return basic info if vision analysis fails
+    return {
+      path: file.path,
+      base64: base64Image,
+      description: "Professional person"
+    };
   }
 }
 
@@ -139,16 +170,25 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
     // Generate persona using GPT-3.5-turbo
     let completion;
     try {
+      // Create the user prompt with optional photo description
+      let userPrompt = `Create a CRM action figure persona based on this role: ${role}, pain point: ${painPoint}, and personality: ${crmPersonality}.`;
+
+      if (uploadedImage && uploadedImage.description) {
+        userPrompt += ` The action figure should resemble this person: ${uploadedImage.description}. Make sure the action figure reflects their actual appearance.`;
+      }
+
+      userPrompt += ` Make it fun, creative and memorable - like a real action figure character!`;
+
       completion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
           {
-            role: "system", 
-            content: "You create fun, creative CRM action figure personas in JSON format with title, quote, and visual_prompt fields. Be playful and imaginative - these are action figures! The title should be a superhero-like name that incorporates their role and personality. The quote should be a catchy one-liner that sounds like something an action figure would say. The visual_prompt should describe a detailed, colorful action figure with accessories and a dynamic pose."
+            role: "system",
+            content: "You create fun, creative CRM action figure personas in JSON format with title, quote, and visual_prompt fields. Be playful and imaginative - these are action figures! The title should be a superhero-like name that incorporates their role and personality. The quote should be a catchy one-liner that sounds like something an action figure would say. The visual_prompt should describe a detailed, colorful action figure with accessories and a dynamic pose. If given a person's appearance description, make sure the action figure reflects their actual physical features."
           },
           {
             role: "user",
-            content: `Create a CRM action figure persona based on this role: ${role}, pain point: ${painPoint}, and personality: ${crmPersonality}. Make it fun, creative and memorable - like a real action figure character!`
+            content: userPrompt
           }
         ],
         temperature: 0.8,
@@ -202,15 +242,16 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
           {
             role: "user",
             content: `Create a DALL-E prompt for a satirical CRM action figure based on:
-            
+
             Title: "${persona.title}"
             Role: ${role}
             Pain Point: ${painPoint}
             Personality: ${crmPersonality}
             Quote: "${persona.quote}"
-            
+            ${uploadedImage && uploadedImage.description ? `\nPerson's Appearance: ${uploadedImage.description}` : ''}
+
             The prompt should describe a photorealistic 3D render of a CRM-themed toy action figure in vintage blister packaging labeled "Julep Confessionals".
-            
+
             IMPORTANT PROMPT GUIDELINES:
             1. Start with "Photorealistic 3D render of a toy action figure in packaging"
             2. Describe the figure as a professional product photo of a toy on store shelves
@@ -219,7 +260,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             5. Describe the packaging design with "Julep Confessionals" logo at the top
             6. Mention the quote appearing on a speech bubble on the packaging
             7. End with "studio lighting, product photography, highly detailed"
-            8. Keep the prompt under 400 characters
+            ${uploadedImage && uploadedImage.description ? '8. IMPORTANT: Make sure the action figure matches the person\'s actual appearance described above' : '8. Keep the prompt under 400 characters'}
             9. DO NOT use quotation marks in your prompt`
           }
         ],
@@ -231,7 +272,14 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       console.log('Generated DALL-E prompt:', dallePrompt);
     } catch (promptError) {
       console.error('Error generating DALL-E prompt:', promptError);
-      dallePrompt = `Photorealistic 3D render of a toy action figure called "${persona.title}" in clear plastic blister packaging with cardboard backing labeled "Julep Confessionals". The figure represents a ${role} with ${crmPersonality} personality. Packaging includes the quote "${persona.quote}". Studio lighting, product photography, highly detailed.`;
+      let fallbackPrompt = `Photorealistic 3D render of a toy action figure called "${persona.title}" in clear plastic blister packaging with cardboard backing labeled "Julep Confessionals". The figure represents a ${role} with ${crmPersonality} personality.`;
+
+      if (uploadedImage && uploadedImage.description) {
+        fallbackPrompt += ` The action figure should look like: ${uploadedImage.description}.`;
+      }
+
+      fallbackPrompt += ` Packaging includes the quote "${persona.quote}". Studio lighting, product photography, highly detailed.`;
+      dallePrompt = fallbackPrompt;
     }
     
     // Generate image using DALL-E with the detailed prompt and retry logic
