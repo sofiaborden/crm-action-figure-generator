@@ -251,9 +251,13 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         messages: [
           {
             role: "system", 
-            content: `You are an expert at creating detailed, creative prompts for DALL-E image generation. 
+            content: `You are an expert at creating detailed, creative prompts for DALL-E image generation.
             You specialize in creating prompts that generate high-quality, photorealistic 3D renders of action figures in vintage packaging.
-            Your prompts consistently produce images that look like professional product photography of actual toys.`
+            Your prompts consistently produce images that look like professional product photography of actual toys.
+
+            CRITICAL: Your prompts MUST always specify "full-body action figure from head to feet, completely visible" and "no body parts cut off or cropped" to ensure the entire figure is shown. You MUST be extremely explicit about showing the complete figure including legs and feet.
+
+            CRITICAL: Your prompts MUST specify exact packaging text requirements and realistic eye colors matching uploaded image descriptions.`
           },
           {
             role: "user",
@@ -267,29 +271,45 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             Quote: "${persona.quote}"
             ${uploadedImage && uploadedImage.description ? `\nPerson's Appearance: ${uploadedImage.description}` : ''}
 
-            CRITICAL REQUIREMENTS:
-            1. ALWAYS show a full-body action figure (never cut off body parts)
-            2. If no clothing is visible in photo, default to simple dark pants/outfit
-            3. Eyes must be consistent color and realistic (no multicolored or skin-colored eyes)
-            4. Gender appearance must match the specified preference: ${genderPreference}
+            MANDATORY DALL-E PROMPT REQUIREMENTS - MUST INCLUDE ALL:
 
-            PACKAGING REQUIREMENTS:
-            1. Main brand title: "Julep Confessionals" at the top
-            2. Character title: "${persona.title}" prominently displayed
-            3. NO other text or wording on packaging
-            4. Consistent vintage toy packaging style
+            1. FULL BODY REQUIREMENT (CRITICAL):
+            - MUST say "full-body action figure from head to feet, completely visible"
+            - MUST say "standing pose showing entire body including legs and feet"
+            - MUST say "no body parts cut off or cropped"
+            - MUST say "complete figure visible in packaging"
 
-            ACCESSORIES (2-4 total):
-            ${uploadedImage && uploadedImage.description ? '- 1 accessory based on uploaded image (sunglasses, jewelry, etc. if visible)' : ''}
-            - 1-2 CRM/nonprofit accessories (laptop, papers, phone, clipboard, etc.)
-            - Keep accessories simple and relevant
+            2. PACKAGING TEXT (EXACT REQUIREMENTS):
+            - Large brand name "Julep Confessionals" at the top of packaging
+            - Character name "${persona.title}" prominently displayed below brand
+            - NO other text, quotes, or words anywhere on the packaging
+            - Clean, minimal text design
 
-            PROMPT STRUCTURE:
-            Start with "Photorealistic 3D render of a full-body toy action figure in clear plastic blister packaging with cardboard backing. Main title 'Julep Confessionals' at top, character name '${persona.title}' below. The ${genderPreference} action figure..."
+            3. EYE COLOR (CRITICAL):
+            ${uploadedImage && uploadedImage.description ? `- MUST match the eye color from uploaded image description: ${uploadedImage.description}` : '- Realistic human eye color (brown, blue, green, or hazel)'}
+            - Both eyes MUST be the same color
+            - NO multicolored, rainbow, or skin-colored eyes
+            - Clear, realistic human eyes
 
-            End with "Studio lighting, professional product photography, highly detailed, consistent toy packaging style."
+            4. CLOTHING:
+            ${uploadedImage && uploadedImage.description ? `- Match clothing from image if visible, otherwise dark professional casual outfit` : 'Dark professional casual clothing (dark pants, shirt)'}
+            - Professional appearance suitable for nonprofit work
 
-            ${uploadedImage && uploadedImage.description ? 'IMPORTANT: Match the person\'s appearance but ensure full body and realistic eyes.' : 'Ensure full body figure with realistic proportions.'}
+            5. ACCESSORIES (2-3 items max):
+            ${uploadedImage && uploadedImage.description ? '- 1 accessory from uploaded image if applicable (glasses, jewelry, etc.)' : ''}
+            - 1-2 CRM/nonprofit work accessories: laptop, clipboard, papers, phone, or tablet
+            - Simple, work-related items only
+
+            6. PACKAGING STYLE:
+            - Vintage toy blister packaging with clear plastic front
+            - Cardboard backing with clean design
+            - Professional toy product photography
+
+            CREATE THE EXACT DALL-E PROMPT NOW:
+            Start with: "Photorealistic 3D render of a full-body ${genderPreference} action figure from head to feet, completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, complete figure visible in clear plastic blister packaging with cardboard backing. Large brand name 'Julep Confessionals' at top of packaging, character name '${persona.title}' prominently displayed below, no other text on packaging."
+
+            Include the appearance and accessories details, then end with: "Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style."
+
             NO quotation marks in your response.`
           }
         ],
@@ -301,15 +321,15 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       console.log('Generated DALL-E prompt:', dallePrompt);
     } catch (promptError) {
       console.error('Error generating DALL-E prompt:', promptError);
-      let fallbackPrompt = `Photorealistic 3D render of a full-body ${genderPreference} toy action figure in clear plastic blister packaging with cardboard backing. Main title "Julep Confessionals" at top, character name "${persona.title}" below. The figure represents a ${role} with ${crmPersonality} personality.`;
+      let fallbackPrompt = `Photorealistic 3D render of a full-body ${genderPreference} action figure from head to feet, completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, complete figure visible in clear plastic blister packaging with cardboard backing. Large brand name "Julep Confessionals" at top of packaging, character name "${persona.title}" prominently displayed below, no other text on packaging. The figure represents a ${role} with ${crmPersonality} personality.`;
 
       if (uploadedImage && uploadedImage.description) {
-        fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with realistic matching eye color and full body visible.`;
+        fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with realistic matching eye color from the uploaded image, both eyes same color, no multicolored eyes.`;
       } else {
-        fallbackPrompt += ` The ${genderPreference} figure has realistic proportions and consistent eye color.`;
+        fallbackPrompt += ` The ${genderPreference} figure has realistic human eye color (brown, blue, green, or hazel), both eyes same color.`;
       }
 
-      fallbackPrompt += ` Includes 2-3 simple CRM accessories (laptop, papers, etc.). Studio lighting, professional product photography, highly detailed, consistent packaging style.`;
+      fallbackPrompt += ` Dark professional casual clothing. Includes 2-3 simple CRM work accessories (laptop, papers, clipboard). Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
       dallePrompt = fallbackPrompt;
     }
     
