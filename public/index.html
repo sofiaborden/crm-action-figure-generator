@@ -3,250 +3,521 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Action Figure Generator</title>
+    <title>CRM Hero Generator - Your Action Figure Awaits!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: 'Inter', sans-serif;
+            background: var(--gradient-bg);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
         }
-        h1 {
-            color: #333;
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 40px 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
-        form {
-            background-color: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            animation: float 20s ease-in-out infinite;
         }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(1deg); }
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-container {
+            padding: 40px 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 0.95rem;
         }
-        input, textarea, select {
+
+        input, select, textarea {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
             font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
         }
-        button:hover {
-            background-color: #45a049;
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
         }
-        #loading {
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            opacity: 0;
+            position: absolute;
+            z-index: -1;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--primary-color);
+            background: rgba(99, 102, 241, 0.05);
+            color: var(--primary-color);
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .generate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .generate-btn:hover::before {
+            left: 100%;
+        }
+
+        small {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .loading {
             display: none;
             text-align: center;
-            margin: 20px 0;
+            padding: 40px;
+            color: var(--primary-color);
         }
-        #result {
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
             display: none;
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: var(--border-radius);
+            text-align: center;
+            border: 1px solid #e2e8f0;
         }
-        #result img {
+
+        .result img {
             max-width: 100%;
-            border-radius: 8px;
-            margin-top: 15px;
+            height: auto;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
+
+        .result h2 {
+            font-family: 'Orbitron', monospace;
+            color: var(--dark-color);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        .result p {
+            color: #4b5563;
+            font-style: italic;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+        }
+
         .share-buttons {
-            margin-top: 20px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             justify-content: center;
+            flex-wrap: wrap;
         }
-        .share-button {
-            padding: 8px 15px;
-            background-color: #3b5998;
-            color: white;
+
+        .share-btn {
+            padding: 10px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
-        .share-button.twitter {
-            background-color: #1DA1F2;
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
-        .share-button.linkedin {
-            background-color: #0077B5;
-        }
-        .share-button.email {
-            background-color: #D44638;
-        }
-        .error-message {
-            color: red;
-            margin-top: 10px;
+
+        .twitter { background-color: #1da1f2; color: white; }
+        .linkedin { background-color: #0077b5; color: white; }
+        .email { background-color: #10b981; color: white; }
+        .download { background-color: #6b7280; color: white; }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>CRM Action Figure Generator</h1>
-    
-    <form id="generatorForm">
-        <div>
-            <label for="role">Your Role:</label>
-            <input type="text" id="role" name="role" required placeholder="e.g., Sales Manager, Marketing Director">
-        </div>
-        
-        <div>
-            <label for="painPoint">Your CRM Pain Point:</label>
-            <textarea id="painPoint" name="painPoint" required placeholder="Describe your biggest frustration with CRM systems"></textarea>
-        </div>
-        
-        <div>
-            <label for="crmPersonality">CRM Personality Type:</label>
-            <select id="crmPersonality" name="crmPersonality" required>
-                <option value="">Select a personality type</option>
-                <option value="Micromanager">Micromanager</option>
-                <option value="Data Hoarder">Data Hoarder</option>
-                <option value="Tech Avoider">Tech Avoider</option>
-                <option value="Process Obsessed">Process Obsessed</option>
-                <option value="Relationship Builder">Relationship Builder</option>
-                <option value="Efficiency Expert">Efficiency Expert</option>
-                <option value="Dashboard Addict">Dashboard Addict</option>
-                <option value="Automation Enthusiast">Automation Enthusiast</option>
-                <option value="Reluctant User">Reluctant User</option>
-                <option value="Other">Other (specify in pain point)</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="image">Upload Your Photo (optional):</label>
-            <input type="file" id="image" name="image" accept="image/*">
-            <small>Your photo will be used to make the action figure resemble you</small>
+    <div class="container">
+        <div class="header">
+            <h1>🦸 CRM HERO GENERATOR</h1>
+            <p class="subtitle">Transform into your ultimate CRM action figure!</p>
         </div>
 
+        <div class="form-container">
+            <form id="cardForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="role">Your CRM Role:</label>
+                        <select id="role" name="role" required>
+                            <option value="">Select your role...</option>
+                            <option value="Sales Manager">Sales Manager</option>
+                            <option value="Account Executive">Account Executive</option>
+                            <option value="Customer Success Manager">Customer Success Manager</option>
+                            <option value="Marketing Manager">Marketing Manager</option>
+                            <option value="Sales Development Rep">Sales Development Rep</option>
+                            <option value="Business Development">Business Development</option>
+                            <option value="CRM Administrator">CRM Administrator</option>
+                            <option value="Sales Operations">Sales Operations</option>
+                            <option value="Revenue Operations">Revenue Operations</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
 
+                    <div class="form-group">
+                        <label for="crmPersonality">Your CRM Personality:</label>
+                        <select id="crmPersonality" name="crmPersonality" required>
+                            <option value="">Choose your type...</option>
+                            <option value="Micromanager">The Micromanager</option>
+                            <option value="Data Hoarder">The Data Hoarder</option>
+                            <option value="Tech Avoider">The Tech Avoider</option>
+                            <option value="Process Obsessed">The Process Obsessed</option>
+                            <option value="Relationship Builder">The Relationship Builder</option>
+                            <option value="Efficiency Expert">The Efficiency Expert</option>
+                            <option value="Dashboard Addict">The Dashboard Addict</option>
+                            <option value="Automation Enthusiast">The Automation Enthusiast</option>
+                            <option value="Reluctant User">The Reluctant User</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label for="useGptImage">Image Generation Method:</label>
-            <select id="useGptImage" name="useGptImage">
-                <option value="false">Use DALL-E (Default)</option>
-                <option value="true">Use GPT (Experimental)</option>
-            </select>
-            <small>GPT method may produce different results than DALL-E</small>
+                <div class="form-group full-width">
+                    <label for="painPoint">Your Biggest CRM Pain Point:</label>
+                    <select id="painPoint" name="painPoint" required>
+                        <option value="">What drives you crazy?</option>
+                        <option value="Data entry takes forever">Data entry takes forever</option>
+                        <option value="Too many clicks to do simple tasks">Too many clicks to do simple tasks</option>
+                        <option value="Reports are confusing">Reports are confusing</option>
+                        <option value="Integration issues">Integration issues</option>
+                        <option value="User adoption problems">User adoption problems</option>
+                        <option value="Duplicate data everywhere">Duplicate data everywhere</option>
+                        <option value="Mobile app is terrible">Mobile app is terrible</option>
+                        <option value="Customization is too complex">Customization is too complex</option>
+                        <option value="Poor customer support">Poor customer support</option>
+                        <option value="Expensive pricing">Expensive pricing</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="image">Upload Your Photo (Optional):</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="image" name="image" accept="image/*" class="file-input">
+                        <label for="image" class="file-input-label">
+                            📸 Click to upload your photo or drag & drop
+                        </label>
+                    </div>
+                    <small>Your photo will be analyzed to make your action figure look like you!</small>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="email">Your Email:</label>
+                    <input type="email" id="email" name="email" required placeholder="hero@company.com">
+                </div>
+
+                <button type="submit" class="generate-btn">
+                    🚀 Generate My Hero
+                </button>
+            </form>
+
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Creating your CRM superhero... This might take 30-60 seconds!</p>
+            </div>
+
+            <div id="result" class="result">
+                <img id="resultImage" src="" alt="Your CRM Action Figure">
+                <h2 id="resultTitle"></h2>
+                <p id="resultQuote"></p>
+                
+                <div class="share-buttons">
+                    <button class="share-btn twitter" onclick="shareOnTwitter()">🐦 Twitter</button>
+                    <button class="share-btn linkedin" onclick="shareOnLinkedIn()">💼 LinkedIn</button>
+                    <button class="share-btn email" onclick="shareViaEmail()">📧 Email</button>
+                    <button class="share-btn download" onclick="downloadImage()">⬇️ Download</button>
+                </div>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
         </div>
-        
-        <div>
-            <label for="email">Your Email:</label>
-            <input type="email" id="email" name="email" required placeholder="your@email.com">
-        </div>
-        
-        <button type="submit">Generate My CRM Action Figure</button>
-    </form>
-    
-    <div id="loading">
-        <p>Generating your custom CRM action figure... This may take a minute.</p>
     </div>
-    
-    <div id="result">
-        <h2 id="figureTitle"></h2>
-        <p id="figureQuote"></p>
-        <img id="figureImage" src="" alt="Generated CRM Action Figure">
-        
-        <div class="share-buttons">
-            <button class="share-button" id="downloadBtn">Download</button>
-            <button class="share-button twitter" id="twitterBtn">Share on Twitter</button>
-            <button class="share-button linkedin" id="linkedinBtn">Share on LinkedIn</button>
-            <button class="share-button email" id="emailBtn">Email</button>
-        </div>
-    </div>
-
     <script>
-        document.getElementById('generatorForm').addEventListener('submit', async function(e) {
+        let currentResult = null;
+
+        // File input handling
+        const fileInput = document.getElementById('image');
+        const fileLabel = document.querySelector('.file-input-label');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileLabel.textContent = `📸 ${file.name}`;
+                fileLabel.style.color = 'var(--primary-color)';
+                fileLabel.style.borderColor = 'var(--primary-color)';
+            }
+        });
+
+        // Form submission
+        document.getElementById('cardForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
-            const loadingDiv = document.getElementById('loading');
-            const resultDiv = document.getElementById('result');
-            
-            // Show loading message
-            loadingDiv.style.display = 'block';
-            loadingDiv.innerHTML = '<p>Generating your CRM action figure... This may take up to 30 seconds.</p>';
-            resultDiv.style.display = 'none';
-            
+            const submitBtn = document.querySelector('.generate-btn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+
+            // Hide previous results
+            result.style.display = 'none';
+            error.style.display = 'none';
+
+            // Show loading
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.textContent = '🔄 Creating Your Hero...';
+
             try {
                 const response = await fetch('/api/generate-card', {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    // Display the result
-                    document.getElementById('figureTitle').textContent = data.card.title;
-                    document.getElementById('figureQuote').textContent = `"${data.card.quote}"`;
-                    
-                    // Handle image loading
-                    const imgElement = document.getElementById('figureImage');
-                    
-                    // Set up image loading handlers
-                    imgElement.onload = function() {
-                        console.log('Image loaded successfully');
-                        resultDiv.style.display = 'block';
-                        loadingDiv.style.display = 'none';
-                    };
-                    
-                    imgElement.onerror = function() {
-                        console.error('Image failed to load');
-                        imgElement.src = 'https://via.placeholder.com/300?text=Image+Generation+Failed';
-                        imgElement.alt = 'Image generation failed';
-                        resultDiv.style.display = 'block';
-                        loadingDiv.style.display = 'none';
-                    };
-                    
-                    // Set image source after setting up handlers
-                    imgElement.src = data.card.imageUrl;
-                    
-                    // Set up share buttons
-                    document.getElementById('twitterBtn').addEventListener('click', () => {
-                        window.open(`https://twitter.com/intent/tweet?text=Check out my CRM Action Figure: ${encodeURIComponent(data.card.title)} - "${encodeURIComponent(data.card.quote)}"&url=${window.location.href}`, '_blank');
-                    });
-                    
-                    document.getElementById('linkedinBtn').addEventListener('click', () => {
-                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}`, '_blank');
-                    });
-                    
-                    document.getElementById('emailBtn').addEventListener('click', () => {
-                        window.location.href = `mailto:?subject=My CRM Action Figure&body=Check out my CRM Action Figure: ${encodeURIComponent(data.card.title)} - "${encodeURIComponent(data.card.quote)}". See it here: ${window.location.href}`;
-                    });
-                    
-                    document.getElementById('downloadBtn').addEventListener('click', () => {
-                        // Create a temporary link to download the image
-                        const link = document.createElement('a');
-                        link.href = data.card.imageUrl;
-                        link.download = `${data.card.title.replace(/\s+/g, '-')}-action-figure.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    });
-                    
+                    currentResult = data;
+                    document.getElementById('resultImage').src = data.imageUrl;
+                    document.getElementById('resultTitle').textContent = data.title;
+                    document.getElementById('resultQuote').textContent = `"${data.quote}"`;
+
+                    loading.style.display = 'none';
+                    result.style.display = 'block';
+
+                    // Scroll to result
+                    result.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    // Show error
-                    resultDiv.style.display = 'block';
-                    resultDiv.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
-                    loadingDiv.style.display = 'none';
+                    throw new Error(data.error || 'Failed to generate action figure');
                 }
-            } catch (error) {
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = `<div class="error-message">An error occurred while generating the persona. Please try again.</div>`;
-                console.error(error);
-                loadingDiv.style.display = 'none';
+            } catch (err) {
+                console.error('Error:', err);
+                error.textContent = `Error: ${err.message}`;
+                error.style.display = 'block';
+                loading.style.display = 'none';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Generate My Hero';
             }
         });
+
+        // Share functions
+        function shareOnTwitter() {
+            if (!currentResult) return;
+            const text = `Check out my CRM Action Figure: ${currentResult.title} - "${currentResult.quote}" 🦸‍♂️`;
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        function shareOnLinkedIn() {
+            if (!currentResult) return;
+            const text = `I just created my CRM Action Figure: ${currentResult.title}! "${currentResult.quote}"`;
+            const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&summary=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        function shareViaEmail() {
+            if (!currentResult) return;
+            const subject = `Check out my CRM Action Figure: ${currentResult.title}`;
+            const body = `I just created my CRM Action Figure!\n\nTitle: ${currentResult.title}\nQuote: "${currentResult.quote}"\n\nCreate your own at: ${window.location.href}`;
+            const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = url;
+        }
+
+        function downloadImage() {
+            if (!currentResult) return;
+            const link = document.createElement('a');
+            link.href = currentResult.imageUrl;
+            link.download = `${currentResult.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_action_figure.jpg`;
+            link.click();
+        }
     </script>
 </body>
 </html>
