@@ -66,14 +66,14 @@ async function processUploadedImage(file) {
     // Use OpenAI Vision to analyze the uploaded photo
     console.log('Analyzing uploaded photo with OpenAI Vision...');
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Look at this image and describe the visual characteristics I can use to create a custom action figure. Describe: hair color and style, clothing/outfit style, general appearance, and any notable visual features. Focus only on what's visible in the image for design purposes. Keep it brief and specific."
+              text: "I'm creating a custom action figure toy. Please describe the visual elements in this image that would be relevant for toy design: hair style and color, clothing style, and general visual characteristics. Focus on design elements only, not personal identification."
             },
             {
               type: "image_url",
@@ -98,11 +98,22 @@ async function processUploadedImage(file) {
   } catch (error) {
     console.error('Error processing uploaded image:', error);
     // Return basic info if vision analysis fails
-    return {
-      path: file.path,
-      base64: base64Image,
-      description: "Professional person"
-    };
+    try {
+      const imageBuffer = fs.readFileSync(file.path);
+      const base64Image = imageBuffer.toString('base64');
+      return {
+        path: file.path,
+        base64: base64Image,
+        description: "Professional person"
+      };
+    } catch (fileError) {
+      console.error('Error reading file:', fileError);
+      return {
+        path: file.path,
+        base64: null,
+        description: "Professional person"
+      };
+    }
   }
 }
 
