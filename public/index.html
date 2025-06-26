@@ -326,18 +326,21 @@
             <form id="cardForm">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="role">Your CRM Role:</label>
+                        <label for="role">Your Role:</label>
                         <select id="role" name="role" required>
                             <option value="">Select your role...</option>
-                            <option value="Sales Manager">Sales Manager</option>
-                            <option value="Account Executive">Account Executive</option>
-                            <option value="Customer Success Manager">Customer Success Manager</option>
-                            <option value="Marketing Manager">Marketing Manager</option>
-                            <option value="Sales Development Rep">Sales Development Rep</option>
-                            <option value="Business Development">Business Development</option>
-                            <option value="CRM Administrator">CRM Administrator</option>
-                            <option value="Sales Operations">Sales Operations</option>
-                            <option value="Revenue Operations">Revenue Operations</option>
+                            <option value="Development Director">Development Director</option>
+                            <option value="Fundraising Manager">Fundraising Manager</option>
+                            <option value="Donor Relations Manager">Donor Relations Manager</option>
+                            <option value="Grant Writer">Grant Writer</option>
+                            <option value="Program Manager">Program Manager</option>
+                            <option value="Executive Director">Executive Director</option>
+                            <option value="Communications Manager">Communications Manager</option>
+                            <option value="Volunteer Coordinator">Volunteer Coordinator</option>
+                            <option value="Database Administrator">Database Administrator</option>
+                            <option value="Development Associate">Development Associate</option>
+                            <option value="Major Gifts Officer">Major Gifts Officer</option>
+                            <option value="Event Coordinator">Event Coordinator</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -376,6 +379,12 @@
                         <option value="Expensive pricing">Expensive pricing</option>
                         <option value="Other">Other</option>
                     </select>
+                </div>
+
+                <div class="form-group full-width" id="customPainPointGroup" style="display: none;">
+                    <label for="customPainPoint">Describe your pain point (max 100 characters):</label>
+                    <input type="text" id="customPainPoint" name="customPainPoint" maxlength="100" placeholder="What specific issue drives you crazy?">
+                    <small id="charCount">0/100 characters</small>
                 </div>
 
                 <div class="form-group full-width">
@@ -436,11 +445,45 @@
             }
         });
 
+        // Pain point custom field handling
+        const painPointSelect = document.getElementById('painPoint');
+        const customPainPointGroup = document.getElementById('customPainPointGroup');
+        const customPainPointInput = document.getElementById('customPainPoint');
+        const charCount = document.getElementById('charCount');
+
+        painPointSelect.addEventListener('change', function(e) {
+            if (e.target.value === 'Other') {
+                customPainPointGroup.style.display = 'block';
+                customPainPointInput.required = true;
+            } else {
+                customPainPointGroup.style.display = 'none';
+                customPainPointInput.required = false;
+                customPainPointInput.value = '';
+                charCount.textContent = '0/100 characters';
+            }
+        });
+
+        customPainPointInput.addEventListener('input', function(e) {
+            const length = e.target.value.length;
+            charCount.textContent = `${length}/100 characters`;
+            if (length > 80) {
+                charCount.style.color = 'var(--danger-color)';
+            } else {
+                charCount.style.color = '#6b7280';
+            }
+        });
+
         // Form submission
         document.getElementById('cardForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const formData = new FormData(this);
+
+            // Handle custom pain point
+            if (painPointSelect.value === 'Other' && customPainPointInput.value.trim()) {
+                formData.set('painPoint', customPainPointInput.value.trim());
+            }
+
             const submitBtn = document.querySelector('.generate-btn');
             const loading = document.getElementById('loading');
             const result = document.getElementById('result');
