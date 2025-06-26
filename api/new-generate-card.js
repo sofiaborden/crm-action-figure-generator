@@ -54,6 +54,8 @@ router.get('/test', (req, res) => {
   res.send('Router is working!');
 });
 
+
+
 // Helper function to process uploaded image and analyze it with OpenAI Vision
 async function processUploadedImage(file) {
   if (!file) return null;

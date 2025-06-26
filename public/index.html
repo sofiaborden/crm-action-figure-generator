@@ -507,10 +507,10 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    currentResult = data;
-                    document.getElementById('resultImage').src = data.imageUrl;
-                    document.getElementById('resultTitle').textContent = data.title;
-                    document.getElementById('resultQuote').textContent = `"${data.quote}"`;
+                    currentResult = data.card;
+                    document.getElementById('resultImage').src = data.card.imageUrl;
+                    document.getElementById('resultTitle').textContent = data.card.title;
+                    document.getElementById('resultQuote').textContent = `"${data.card.quote}"`;
 
                     loading.style.display = 'none';
                     result.style.display = 'block';
