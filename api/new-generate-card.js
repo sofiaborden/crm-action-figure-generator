@@ -66,14 +66,14 @@ async function processUploadedImage(file) {
     // Use OpenAI Vision to analyze the uploaded photo
     console.log('Analyzing uploaded photo with OpenAI Vision...');
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4-vision-preview",
       messages: [
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Analyze this photo and describe the person's appearance for creating an action figure. Focus on: gender, approximate age, hair color/style, eye color, facial features, and overall professional appearance. Be concise and specific."
+              text: "Look at this image and describe the visual characteristics I can use to create a custom action figure. Describe: hair color and style, clothing/outfit style, general appearance, and any notable visual features. Focus only on what's visible in the image for design purposes. Keep it brief and specific."
             },
             {
               type: "image_url",
