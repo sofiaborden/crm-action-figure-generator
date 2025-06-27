@@ -103,7 +103,14 @@
         }
 
         .form-container {
-            padding: 30px 25px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .form-grid {
@@ -140,7 +147,7 @@
             }
 
             .form-container {
-                padding: 18px;
+                padding: 25px;
             }
 
             .form-group {
@@ -527,6 +534,23 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label for="bonusAccessory">Bonus Fun Accessory: <span class="optional">(Optional)</span></label>
+                    <select id="bonusAccessory" name="bonusAccessory">
+                        <option value="">Pick a fun extra...</option>
+                        <option value="Baseball cap">Baseball cap</option>
+                        <option value="Sunglasses">Sunglasses</option>
+                        <option value="Coffee mug">Coffee mug</option>
+                        <option value="Eyeglasses">Eyeglasses</option>
+                        <option value="Sun hat">Sun hat</option>
+                        <option value="Ice cream cone">Ice cream cone</option>
+                        <option value="Headphones">Headphones</option>
+                        <option value="Scarf">Scarf</option>
+                        <option value="Watch">Watch</option>
+                        <option value="Backpack">Backpack</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group full-width" id="customPainPointGroup" style="display: none;">
@@ -541,27 +565,27 @@
                 <small id="accessoryCharCount">0/30 characters</small>
             </div>
 
-            <div class="form-grid">
-
-                <div class="form-group full-width">
-                    <label for="image">Upload Your Photo (Optional):</label>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="image" name="image" accept="image/*" class="file-input">
-                        <label for="image" class="file-input-label">
-                            📸 Click to upload your photo or drag & drop
-                        </label>
-                    </div>
-                    <small>Your photo will be analyzed to make your action figure look like you!</small>
+            <div class="form-group full-width">
+                <label for="image">Upload Your Photo (Optional):</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="image" name="image" accept="image/*" class="file-input">
+                    <label for="image" class="file-input-label">
+                        📸 Click to upload your photo or drag & drop
+                    </label>
                 </div>
+                <small>Your photo will be analyzed to make your action figure look like you!</small>
+            </div>
 
-                <div class="form-group full-width">
-                    <label for="email">Your Email:</label>
-                    <input type="email" id="email" name="email" required placeholder="hero@company.com">
-                </div>
+            <div class="form-group full-width">
+                <label for="email">Your Email:</label>
+                <input type="email" id="email" name="email" required placeholder="hero@company.com">
+            </div>
 
+            <div class="form-group full-width" style="text-align: center;">
                 <button type="submit" class="generate-btn">
                     🚀 Generate My Hero
                 </button>
+            </div>
             </form>
 
             <div id="loading" class="loading">
