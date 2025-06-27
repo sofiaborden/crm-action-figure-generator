@@ -379,11 +379,13 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - MUST say "full legs and feet visible with proper footwear"
 
             2. PACKAGING TEXT (EXACT REQUIREMENTS):
-            - Large brand name "Julep Confessionals" at the very top of packaging (main brand title)
-            - Character name "${persona.title}" prominently displayed below as secondary title
+            - Large brand name "Julep Confessionals" at the very top of packaging in large, bold, modern font (white or teal color)
+            - Character name "${persona.title}" prominently displayed below in smaller, complementary font style
             - These are the ONLY two text elements allowed on the packaging
             - NO quotes, NO other words, NO additional text anywhere
+            - NO picture of action figure on the packaging - keep packaging simple and clean
             - Clean, professional toy packaging design with only these two titles
+            - Simple packaging design that emphasizes the actual action figure, not packaging graphics
 
             3. EYE COLOR (CRITICAL):
             ${uploadedImage && uploadedImage.description ? `- MUST match the eye color from uploaded image description: ${uploadedImage.description}` : '- Realistic human eye color (brown, blue, green, or hazel)'}
@@ -399,8 +401,10 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'} (miniature toy version)
             - Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'} (miniature toy version)
             - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'} (miniature toy version)
-            - Bonus accessory: ${finalBonusAccessory ? finalBonusAccessory.toLowerCase() + ' (worn or held by the action figure)' : 'none'} (miniature toy version)
+            - Bonus accessory: ${finalBonusAccessory ? finalBonusAccessory.toLowerCase() + ' (MUST be worn or held by the action figure, visible on the figure)' : 'none'}
+            - Show each accessory only ONCE - no duplicates
             - ALL accessories must look like small plastic toy accessories that come with action figures
+            - If bonus accessory is selected, it must be clearly worn or held by the figure
             - EXACTLY these 4 accessories only, NO additional items
             - NO beer bottles, NO extra shoes, NO random objects, NO duplicates
             - NO background items, NO environmental objects, NO props beyond the 4 specified accessories
