@@ -345,7 +345,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
 
             CRITICAL: Your prompts MUST always specify "full-body action figure from head to feet, completely visible" and "no body parts cut off or cropped" to ensure the entire figure is shown. You MUST be extremely explicit about showing the complete figure including legs and feet.
 
-            CRITICAL: Your prompts MUST specify exact packaging text requirements and realistic eye colors matching uploaded image descriptions.`
+            CRITICAL: Your prompts MUST specify exact packaging text requirements with readable fonts and realistic eye colors matching uploaded image descriptions. The packaging text must be clearly visible and professionally formatted like real toy packaging.`
           },
           {
             role: "user",
@@ -378,14 +378,16 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - MUST say "wearing appropriate shoes that match the outfit"
             - MUST say "full legs and feet visible with proper footwear"
 
-            2. PACKAGING TEXT (EXACT REQUIREMENTS):
-            - Large brand name "Julep Confessionals" at the very top of packaging in large, bold, modern font (white or teal color)
-            - Character name "${persona.title}" prominently displayed below in smaller, complementary font style
+            2. PACKAGING TEXT (EXACT REQUIREMENTS - MUST BE READABLE AND CONSISTENT):
+            - LARGE TITLE: "Julep Confessionals" in big, bold, sans-serif font at the top (white text on colored background)
+            - SMALLER SUBTITLE: "${persona.title}" in medium-sized, clean font below the main title (white or light colored text)
+            - FONT REQUIREMENTS: Use clean, modern, readable fonts like Arial, Helvetica, or similar sans-serif
+            - TEXT MUST BE CLEARLY READABLE and properly sized for toy packaging
             - These are the ONLY two text elements allowed on the packaging
-            - NO quotes, NO other words, NO additional text anywhere
+            - NO quotes, NO other words, NO additional text anywhere on the package
             - NO picture of action figure on the packaging - keep packaging simple and clean
-            - Clean, professional toy packaging design with only these two titles
-            - Simple packaging design that emphasizes the actual action figure, not packaging graphics
+            - Clean, professional toy packaging design with only these two text titles
+            - Text should be positioned clearly and professionally like real toy packaging
 
             3. EYE COLOR (CRITICAL):
             ${uploadedImage && uploadedImage.description ? `- MUST match the eye color from uploaded image description: ${uploadedImage.description}` : '- Realistic human eye color (brown, blue, green, or hazel)'}
