@@ -148,7 +148,7 @@ async function processUploadedImage(file) {
           content: [
             {
               type: "text",
-              text: "I'm creating a custom action figure toy. Please describe the visual elements in this image that would be relevant for toy design: hair style and color, clothing style, apparent gender presentation (male/female/ambiguous), and general visual characteristics. Focus on design elements only, not personal identification. Start your response with 'Gender: [male/female/ambiguous]' then describe other visual elements."
+              text: "I'm creating a custom action figure toy. Please describe the visual elements in this image that would be relevant for toy design: hair style and color, clothing style, apparent gender presentation (male/female/ambiguous), and general visual characteristics. Focus on design elements only, not personal identification. IMPORTANT: First specify how many people are clearly visible in the image. Start your response with 'People count: [number]' then 'Gender: [male/female/ambiguous]' then describe other visual elements. If multiple people are shown, describe each person separately."
             },
             {
               type: "image_url",
@@ -367,7 +367,8 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - MUST say "single figure in packaging, no other people or figures"
             - MUST say "no multiple figures, no background people, no crowds"
             - MUST say "isolated single action figure product shot"
-            - ONLY show one person/figure unless uploaded image clearly shows multiple people
+            - If uploaded image shows multiple people, create multiple action figures; otherwise create only ONE action figure
+            - NEVER add random people or extra figures not in the uploaded image
 
             1. FULL BODY REQUIREMENT (CRITICAL):
             - MUST say "full-body action figure from head to feet, completely visible"
@@ -398,7 +399,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'} (miniature toy version)
             - Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'} (miniature toy version)
             - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'} (miniature toy version)
-            - Bonus accessory: ${finalBonusAccessory ? finalBonusAccessory.toLowerCase() : 'none'} (miniature toy version)
+            - Bonus accessory: ${finalBonusAccessory ? finalBonusAccessory.toLowerCase() + ' (worn or held by the action figure)' : 'none'} (miniature toy version)
             - ALL accessories must look like small plastic toy accessories that come with action figures
             - EXACTLY these 4 accessories only, NO additional items
             - NO beer bottles, NO extra shoes, NO random objects, NO duplicates
