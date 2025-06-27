@@ -114,7 +114,7 @@ const writer = csvWriter({
     {id: 'role', title: 'ROLE'},
     {id: 'painPoint', title: 'PAIN_POINT'},
     {id: 'crmPersonality', title: 'CRM_PERSONALITY'},
-    {id: 'genderPreference', title: 'GENDER_PREFERENCE'},
+    {id: 'genderPreference', title: 'DETECTED_GENDER'},
     {id: 'bonusAccessory', title: 'BONUS_ACCESSORY'},
     {id: 'title', title: 'GENERATED_TITLE'},
     {id: 'quote', title: 'GENERATED_QUOTE'}
@@ -148,7 +148,7 @@ async function processUploadedImage(file) {
           content: [
             {
               type: "text",
-              text: "I'm creating a custom action figure toy. Please describe the visual elements in this image that would be relevant for toy design: hair style and color, clothing style, and general visual characteristics. Focus on design elements only, not personal identification."
+              text: "I'm creating a custom action figure toy. Please describe the visual elements in this image that would be relevant for toy design: hair style and color, clothing style, apparent gender presentation (male/female/ambiguous), and general visual characteristics. Focus on design elements only, not personal identification. Start your response with 'Gender: [male/female/ambiguous]' then describe other visual elements."
             },
             {
               type: "image_url",
@@ -165,10 +165,19 @@ async function processUploadedImage(file) {
     const photoDescription = visionResponse.choices[0].message.content;
     console.log('Photo analysis:', photoDescription);
 
+    // Extract gender from the analysis
+    let detectedGender = 'ambiguous';
+    if (photoDescription.toLowerCase().includes('gender: male')) {
+      detectedGender = 'male';
+    } else if (photoDescription.toLowerCase().includes('gender: female')) {
+      detectedGender = 'female';
+    }
+
     return {
       path: file.path,
       base64: base64Image,
-      description: photoDescription
+      description: photoDescription,
+      detectedGender: detectedGender
     };
   } catch (error) {
     console.error('Error processing uploaded image:', error);
@@ -241,10 +250,13 @@ async function generateDallEImage(prompt, retries = 3) {
 router.post('/generate-card', upload.single('image'), async (req, res) => {
   try {
     console.log('Received request:', req.body);
-    const { role, painPoint, crmPersonality, email, genderPreference, bonusAccessory } = req.body;
+    const { role, painPoint, crmPersonality, email, bonusAccessory } = req.body;
     const uploadedImage = req.file ? await processUploadedImage(req.file) : null;
 
-    if (!role || !painPoint || !crmPersonality || !email || !genderPreference || !bonusAccessory) {
+    // Use detected gender from image analysis, or default to ambiguous
+    const genderPreference = uploadedImage?.detectedGender || 'ambiguous';
+
+    if (!role || !painPoint || !crmPersonality || !email || !bonusAccessory) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -351,12 +363,15 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - MUST say "standing pose showing entire body including legs and feet"
             - MUST say "no body parts cut off or cropped"
             - MUST say "complete figure visible in packaging"
+            - MUST say "wearing appropriate shoes that match the outfit"
+            - MUST say "full legs and feet visible with proper footwear"
 
             2. PACKAGING TEXT (EXACT REQUIREMENTS):
-            - Large brand name "Julep Confessionals" at the top of packaging
-            - Character name "${persona.title}" prominently displayed below brand
-            - NO other text, quotes, or words anywhere on the packaging
-            - Clean, minimal text design
+            - Large brand name "Julep Confessionals" at the very top of packaging (main brand title)
+            - Character name "${persona.title}" prominently displayed below as secondary title
+            - These are the ONLY two text elements allowed on the packaging
+            - NO quotes, NO other words, NO additional text anywhere
+            - Clean, professional toy packaging design with only these two titles
 
             3. EYE COLOR (CRITICAL):
             ${uploadedImage && uploadedImage.description ? `- MUST match the eye color from uploaded image description: ${uploadedImage.description}` : '- Realistic human eye color (brown, blue, green, or hazel)'}
@@ -368,12 +383,13 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             ${uploadedImage && uploadedImage.description ? `- Match clothing from image if visible, otherwise dark professional casual outfit` : 'Dark professional casual clothing (dark pants, shirt)'}
             - Professional appearance suitable for nonprofit work
 
-            5. ACCESSORIES (EXACT ITEMS ONLY):
-            - Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}
-            - Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}
-            - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[painPoint] || 'help manual'}
-            - Bonus accessory: ${bonusAccessory.toLowerCase()}
-            - NO other accessories, NO random items, ONLY these specific items
+            5. ACCESSORIES (EXACT ITEMS ONLY - MUST LOOK LIKE TOY ACCESSORIES):
+            - Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'} (miniature toy version)
+            - Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'} (miniature toy version)
+            - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[painPoint] || 'help manual'} (miniature toy version)
+            - Bonus accessory: ${bonusAccessory.toLowerCase()} (miniature toy version)
+            - ALL accessories must look like small plastic toy accessories that come with action figures
+            - NO other accessories, NO random items, ONLY these specific items as toy accessories
 
             6. PACKAGING STYLE:
             - Vintage toy blister packaging with clear plastic front
@@ -405,7 +421,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       }
 
       const systematicAccessories = getSystematicAccessories(role, crmPersonality, painPoint, bonusAccessory);
-      fallbackPrompt += ` Dark professional casual clothing. Includes these specific accessories: ${systematicAccessories.join(', ')}. Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
+      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes that match the outfit. Includes these specific miniature toy accessories: ${systematicAccessories.join(', ')} (all as small plastic toy accessories). Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
       dallePrompt = fallbackPrompt;
     }
     
