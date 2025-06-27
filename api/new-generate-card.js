@@ -29,6 +29,77 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// Systematic Accessory Mapping System
+const ACCESSORY_MAPPINGS = {
+  roles: {
+    'Development Director': 'fundraising thermometer',
+    'Fundraising Manager': 'donation box',
+    'Donor Relations Manager': 'thank you card',
+    'Grant Writer': 'stack of grant applications',
+    'Program Manager': 'project timeline chart',
+    'Executive Director': 'strategic plan document',
+    'Communications Manager': 'megaphone',
+    'Volunteer Coordinator': 'volunteer badge',
+    'Database Administrator': 'computer server',
+    'Development Associate': 'donor database printout',
+    'Major Gifts Officer': 'handshake gesture',
+    'Event Coordinator': 'event planning checklist'
+  },
+  personalities: {
+    'The Micromanager': 'magnifying glass',
+    'The Data Hoarder': 'filing cabinet',
+    'The Tech Avoider': 'paper and pen',
+    'The Process Obsessed': 'flowchart diagram',
+    'The Relationship Builder': 'networking business cards',
+    'The Efficiency Expert': 'stopwatch',
+    'The Dashboard Addict': 'computer monitor with charts',
+    'The Automation Enthusiast': 'robot assistant',
+    'The Reluctant User': 'help manual',
+    'Other': 'question mark sign'
+  },
+  painPoints: {
+    'Data entry takes forever': 'keyboard with tired hands',
+    'Too many clicks to do simple tasks': 'computer mouse with click counter',
+    'Reports are confusing': 'tangled chart papers',
+    'Integration issues': 'broken puzzle pieces',
+    'User adoption problems': 'training manual',
+    'Duplicate data everywhere': 'copy machine',
+    'Mobile app is terrible': 'cracked smartphone',
+    'Customization is too complex': 'complicated toolbox',
+    'Poor customer support': 'disconnected phone',
+    'Expensive pricing': 'money bag with hole',
+    'Other': 'coffee mug with sad face emoji'
+  }
+};
+
+// Function to get specific accessories based on form selections
+function getSystematicAccessories(role, personality, painPoint, bonusAccessory) {
+  const accessories = [];
+
+  // Add role-based accessory
+  if (ACCESSORY_MAPPINGS.roles[role]) {
+    accessories.push(ACCESSORY_MAPPINGS.roles[role]);
+  }
+
+  // Add personality-based accessory
+  if (ACCESSORY_MAPPINGS.personalities[personality]) {
+    accessories.push(ACCESSORY_MAPPINGS.personalities[personality]);
+  }
+
+  // Add pain point accessory (only if different from others)
+  const painPointAccessory = ACCESSORY_MAPPINGS.painPoints[painPoint];
+  if (painPointAccessory && !accessories.includes(painPointAccessory)) {
+    accessories.push(painPointAccessory);
+  }
+
+  // Add bonus accessory
+  if (bonusAccessory) {
+    accessories.push(bonusAccessory.toLowerCase());
+  }
+
+  return accessories.slice(0, 4); // Max 4 accessories
+}
+
 // Create uploads directory if it doesn't exist
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
@@ -44,6 +115,7 @@ const writer = csvWriter({
     {id: 'painPoint', title: 'PAIN_POINT'},
     {id: 'crmPersonality', title: 'CRM_PERSONALITY'},
     {id: 'genderPreference', title: 'GENDER_PREFERENCE'},
+    {id: 'bonusAccessory', title: 'BONUS_ACCESSORY'},
     {id: 'title', title: 'GENERATED_TITLE'},
     {id: 'quote', title: 'GENERATED_QUOTE'}
   ],
@@ -169,10 +241,10 @@ async function generateDallEImage(prompt, retries = 3) {
 router.post('/generate-card', upload.single('image'), async (req, res) => {
   try {
     console.log('Received request:', req.body);
-    const { role, painPoint, crmPersonality, email, genderPreference } = req.body;
+    const { role, painPoint, crmPersonality, email, genderPreference, bonusAccessory } = req.body;
     const uploadedImage = req.file ? await processUploadedImage(req.file) : null;
 
-    if (!role || !painPoint || !crmPersonality || !email || !genderPreference) {
+    if (!role || !painPoint || !crmPersonality || !email || !genderPreference || !bonusAccessory) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -268,6 +340,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             Pain Point: ${painPoint}
             Personality: ${crmPersonality}
             Gender Preference: ${genderPreference}
+            Bonus Accessory: ${bonusAccessory}
             Quote: "${persona.quote}"
             ${uploadedImage && uploadedImage.description ? `\nPerson's Appearance: ${uploadedImage.description}` : ''}
 
@@ -295,10 +368,12 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             ${uploadedImage && uploadedImage.description ? `- Match clothing from image if visible, otherwise dark professional casual outfit` : 'Dark professional casual clothing (dark pants, shirt)'}
             - Professional appearance suitable for nonprofit work
 
-            5. ACCESSORIES (2-3 items max):
-            ${uploadedImage && uploadedImage.description ? '- 1 accessory from uploaded image if applicable (glasses, jewelry, etc.)' : ''}
-            - 1-2 CRM/nonprofit work accessories: laptop, clipboard, papers, phone, or tablet
-            - Simple, work-related items only
+            5. ACCESSORIES (EXACT ITEMS ONLY):
+            - Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}
+            - Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}
+            - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[painPoint] || 'help manual'}
+            - Bonus accessory: ${bonusAccessory.toLowerCase()}
+            - NO other accessories, NO random items, ONLY these specific items
 
             6. PACKAGING STYLE:
             - Vintage toy blister packaging with clear plastic front
@@ -329,7 +404,8 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         fallbackPrompt += ` The ${genderPreference} figure has realistic human eye color (brown, blue, green, or hazel), both eyes same color.`;
       }
 
-      fallbackPrompt += ` Dark professional casual clothing. Includes 2-3 simple CRM work accessories (laptop, papers, clipboard). Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
+      const systematicAccessories = getSystematicAccessories(role, crmPersonality, painPoint, bonusAccessory);
+      fallbackPrompt += ` Dark professional casual clothing. Includes these specific accessories: ${systematicAccessories.join(', ')}. Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
       dallePrompt = fallbackPrompt;
     }
     
@@ -346,6 +422,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         painPoint,
         crmPersonality,
         genderPreference,
+        bonusAccessory,
         title: persona.title,
         quote: persona.quote
       }]);
