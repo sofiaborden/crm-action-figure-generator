@@ -358,6 +358,12 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
 
             MANDATORY DALL-E PROMPT REQUIREMENTS - MUST INCLUDE ALL:
 
+            0. SINGLE FIGURE REQUIREMENT (ABSOLUTELY CRITICAL):
+            - MUST say "exactly ONE action figure only"
+            - MUST say "single figure in packaging, no other people or figures"
+            - MUST say "no multiple figures, no background people, no crowds"
+            - MUST say "isolated single action figure product shot"
+
             1. FULL BODY REQUIREMENT (CRITICAL):
             - MUST say "full-body action figure from head to feet, completely visible"
             - MUST say "standing pose showing entire body including legs and feet"
@@ -389,15 +395,21 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[painPoint] || 'help manual'} (miniature toy version)
             - Bonus accessory: ${bonusAccessory.toLowerCase()} (miniature toy version)
             - ALL accessories must look like small plastic toy accessories that come with action figures
-            - NO other accessories, NO random items, ONLY these specific items as toy accessories
+            - EXACTLY these 4 accessories only, NO additional items
+            - NO beer bottles, NO extra shoes, NO random objects, NO duplicates
+            - NO background items, NO environmental objects, NO props beyond the 4 specified accessories
 
-            6. PACKAGING STYLE:
+            6. PACKAGING STYLE & RESTRICTIONS:
             - Vintage toy blister packaging with clear plastic front
             - Cardboard backing with clean design
             - Professional toy product photography
+            - CLEAN white or neutral background, NO busy backgrounds
+            - NO other products, NO multiple packages, NO store shelves
+            - SINGLE package only, isolated product shot
+            - NO text anywhere except the two specified titles on packaging
 
             CREATE THE EXACT DALL-E PROMPT NOW:
-            Start with: "Photorealistic 3D render of a full-body ${genderPreference} action figure from head to feet, completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, complete figure visible in clear plastic blister packaging with cardboard backing. Large brand name 'Julep Confessionals' at top of packaging, character name '${persona.title}' prominently displayed below, no other text on packaging."
+            Start with: "Photorealistic 3D render of exactly ONE ${genderPreference} action figure only, full-body from head to feet completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, single figure in clear plastic blister packaging with cardboard backing, no other people or figures, isolated product shot. Large brand name 'Julep Confessionals' at top of packaging, character name '${persona.title}' prominently displayed below, no other text anywhere on packaging."
 
             Include the appearance and accessories details, then end with: "Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style."
 
@@ -412,7 +424,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       console.log('Generated DALL-E prompt:', dallePrompt);
     } catch (promptError) {
       console.error('Error generating DALL-E prompt:', promptError);
-      let fallbackPrompt = `Photorealistic 3D render of a full-body ${genderPreference} action figure from head to feet, completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, complete figure visible in clear plastic blister packaging with cardboard backing. Large brand name "Julep Confessionals" at top of packaging, character name "${persona.title}" prominently displayed below, no other text on packaging. The figure represents a ${role} with ${crmPersonality} personality.`;
+      let fallbackPrompt = `Photorealistic 3D render of exactly ONE ${genderPreference} action figure only, full-body from head to feet completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, single figure in clear plastic blister packaging with cardboard backing, no other people or figures, isolated product shot, clean white background. Large brand name "Julep Confessionals" at top of packaging, character name "${persona.title}" prominently displayed below, no other text anywhere on packaging. The figure represents a ${role} with ${crmPersonality} personality.`;
 
       if (uploadedImage && uploadedImage.description) {
         fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with realistic matching eye color from the uploaded image, both eyes same color, no multicolored eyes.`;
@@ -421,7 +433,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       }
 
       const systematicAccessories = getSystematicAccessories(role, crmPersonality, painPoint, bonusAccessory);
-      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes that match the outfit. Includes these specific miniature toy accessories: ${systematicAccessories.join(', ')} (all as small plastic toy accessories). Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
+      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes that match the outfit. Includes exactly these 4 specific miniature toy accessories only: ${systematicAccessories.join(', ')} (all as small plastic toy accessories), no other accessories, no beer bottles, no extra shoes, no random objects, no duplicates. Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
       dallePrompt = fallbackPrompt;
     }
     
