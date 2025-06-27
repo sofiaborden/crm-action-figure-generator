@@ -165,8 +165,28 @@
             }
 
             .progress-steps {
-                flex-direction: column;
-                gap: 15px;
+                flex-direction: row;
+                gap: 8px;
+                max-width: 100%;
+            }
+
+            .progress-step {
+                min-width: 60px;
+            }
+
+            .step-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 11px;
+            }
+
+            .step-text {
+                font-size: 0.7rem;
+            }
+
+            .progress-arrow {
+                font-size: 1rem;
+                margin: 0 3px;
             }
 
             .progress-arrow {
@@ -328,9 +348,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 20px 0;
+            margin: 20px auto;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
+            max-width: 450px;
         }
 
         .progress-step {
@@ -338,30 +359,47 @@
             flex-direction: column;
             align-items: center;
             opacity: 0.4;
-            transition: opacity 0.3s ease;
-            min-width: 80px;
+            transition: all 0.3s ease;
+            min-width: 70px;
         }
 
         .progress-step.active {
             opacity: 1;
-            color: var(--primary-color);
+            transform: scale(1.05);
         }
 
         .step-icon {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
+            width: 28px;
+            height: 28px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #32859a;
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .progress-step.active .step-icon {
+            background: #27a588;
+            animation: pulse 2s infinite;
         }
 
         .step-text {
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-align: center;
+            color: #32859a;
+            line-height: 1.1;
         }
 
         .progress-arrow {
             font-size: 1.2rem;
-            color: #9ca3af;
-            margin: 0 10px;
+            color: #32859a;
+            opacity: 0.5;
+            margin: 0 5px;
         }
 
         .loading-message {
@@ -432,10 +470,10 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .twitter { background-color: #1da1f2; color: white; }
-        .linkedin { background-color: #0077b5; color: white; }
-        .email { background-color: #10b981; color: white; }
-        .download { background-color: #6b7280; color: white; }
+        .twitter { background-color: #32859a; color: white; }
+        .linkedin { background-color: #27a588; color: white; }
+        .email { background-color: #32859a; color: white; }
+        .download { background-color: #27a588; color: white; }
 
         .error {
             background: #fef2f2;
@@ -573,17 +611,17 @@
                 <div class="loading-spinner"></div>
                 <div class="progress-steps">
                     <div class="progress-step active" id="step1">
-                        <div class="step-icon">📸</div>
+                        <div class="step-icon">1</div>
                         <div class="step-text">Analyzing photo</div>
                     </div>
                     <div class="progress-arrow">→</div>
                     <div class="progress-step" id="step2">
-                        <div class="step-icon">🧠</div>
+                        <div class="step-icon">2</div>
                         <div class="step-text">Creating persona</div>
                     </div>
                     <div class="progress-arrow">→</div>
                     <div class="progress-step" id="step3">
-                        <div class="step-icon">🎨</div>
+                        <div class="step-icon">3</div>
                         <div class="step-text">Generating figure</div>
                     </div>
                 </div>
@@ -596,10 +634,10 @@
                 <p id="resultQuote"></p>
                 
                 <div class="share-buttons">
-                    <button class="share-btn twitter" onclick="shareOnTwitter()">🐦 Twitter</button>
-                    <button class="share-btn linkedin" onclick="shareOnLinkedIn()">💼 LinkedIn</button>
-                    <button class="share-btn email" onclick="shareViaEmail()">📧 Email</button>
-                    <button class="share-btn download" onclick="downloadImage()">⬇️ Download</button>
+                    <button class="share-btn twitter" onclick="shareOnTwitter()">Share on Twitter</button>
+                    <button class="share-btn linkedin" onclick="shareOnLinkedIn()">Share on LinkedIn</button>
+                    <button class="share-btn email" onclick="shareViaEmail()">Share via Email</button>
+                    <button class="share-btn download" onclick="downloadImage()">Download Image</button>
                 </div>
             </div>
 
