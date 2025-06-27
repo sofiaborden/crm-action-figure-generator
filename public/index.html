@@ -52,23 +52,13 @@
             overflow: hidden;
         }
 
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
         .julep-logo {
-            height: 60px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            height: 50px;
             width: auto;
-            filter: brightness(0) invert(1);
-        }
-
-        .header-text {
-            flex: 1;
-            min-width: 300px;
+            opacity: 0.9;
         }
 
         .header::before {
@@ -149,22 +139,16 @@
                 gap: 15px;
             }
 
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-            }
-
             .julep-logo {
-                height: 45px;
-            }
-
-            .header-text {
-                min-width: auto;
+                height: 35px;
+                top: 15px;
+                right: 15px;
             }
 
             .header h1 {
                 font-size: 2rem;
                 margin-bottom: 12px;
+                padding-right: 50px;
             }
 
             .header .subtitle {
@@ -174,11 +158,11 @@
 
             .footer-content {
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px;
             }
 
             .footer-logo {
-                height: 30px;
+                height: 25px;
             }
 
             .disclaimer {
@@ -526,25 +510,26 @@
         }
 
         .footer {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 30px 20px;
+            background: rgba(50, 133, 154, 0.1);
+            color: var(--primary-color);
+            padding: 20px;
             text-align: center;
             margin-top: 40px;
+            border-top: 1px solid rgba(50, 133, 154, 0.2);
         }
 
         .footer-content {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         .footer-logo {
-            height: 40px;
+            height: 30px;
             width: auto;
-            filter: brightness(0) invert(1);
+            opacity: 0.8;
         }
 
         .footer p {
@@ -553,14 +538,14 @@
         }
 
         .footer a {
-            color: white;
+            color: var(--primary-color);
             text-decoration: none;
             font-weight: 600;
             transition: opacity 0.3s ease;
         }
 
         .footer a:hover {
-            opacity: 0.8;
+            opacity: 0.7;
             text-decoration: underline;
         }
 
@@ -577,13 +562,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="header-content">
-                <img src="julep-logo.png" alt="Julep Logo" class="julep-logo">
-                <div class="header-text">
-                    <h1>🦸 CRM HERO GENERATOR</h1>
-                    <p class="subtitle">Transform into your ultimate CRM action figure!</p>
-                </div>
-            </div>
+            <img src="julep-logo.png" alt="Julep Logo" class="julep-logo">
+            <h1>🦸 CRM HERO GENERATOR</h1>
+            <p class="subtitle">Transform into your ultimate CRM action figure!</p>
             <div class="disclaimer">
                 ⚠️ Warning: AI-generated weirdness ahead! Your action figure might be hilariously inaccurate, completely random, or surprisingly awesome. Results may vary wildly - it's all up to our AI overlords! 🤖
             </div>
