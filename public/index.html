@@ -85,6 +85,22 @@
             z-index: 1;
         }
 
+        .disclaimer {
+            background: rgba(255, 193, 7, 0.1);
+            border: 2px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 20px auto;
+            max-width: 600px;
+            font-size: 0.95rem;
+            color: #856404;
+            text-align: center;
+            font-weight: 500;
+            line-height: 1.4;
+            position: relative;
+            z-index: 1;
+        }
+
         .form-container {
             padding: 40px 30px;
         }
@@ -97,11 +113,62 @@
         }
 
         @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
             .form-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
+
             .header h1 {
                 font-size: 2rem;
+                margin-bottom: 15px;
+            }
+
+            .header .subtitle {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+
+            .disclaimer {
+                padding: 12px 15px;
+                margin: 15px auto;
+                font-size: 0.9rem;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            input, select, textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 12px 15px;
+            }
+
+            .generate-btn {
+                padding: 15px 25px;
+                font-size: 1rem;
+            }
+
+            .progress-steps {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .progress-arrow {
+                transform: rotate(90deg);
+                margin: 5px 0;
+            }
+
+            .result img {
+                max-width: 100%;
+                height: auto;
             }
         }
 
@@ -111,6 +178,11 @@
 
         .form-group.full-width {
             grid-column: 1 / -1;
+            margin-bottom: 30px;
+        }
+
+        .form-group.full-width:last-of-type {
+            margin-bottom: 25px;
         }
 
         label {
@@ -238,6 +310,52 @@
             margin: 0 auto 20px;
         }
 
+        .progress-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+            min-width: 80px;
+        }
+
+        .progress-step.active {
+            opacity: 1;
+            color: var(--primary-color);
+        }
+
+        .step-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .step-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .progress-arrow {
+            font-size: 1.2rem;
+            color: #9ca3af;
+            margin: 0 10px;
+        }
+
+        .loading-message {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -320,6 +438,9 @@
         <div class="header">
             <h1>🦸 CRM HERO GENERATOR</h1>
             <p class="subtitle">Transform into your ultimate CRM action figure!</p>
+            <div class="disclaimer">
+                ⚠️ Warning: AI-generated weirdness ahead! Your action figure might be hilariously inaccurate, completely random, or surprisingly awesome. Results may vary wildly - it's all up to our AI overlords! 🤖
+            </div>
         </div>
 
         <div class="form-container">
@@ -362,7 +483,7 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group full-width">
                         <label for="bonusAccessory">Bonus Fun Accessory:</label>
                         <select id="bonusAccessory" name="bonusAccessory" required>
                             <option value="">Pick a fun extra...</option>
@@ -427,7 +548,23 @@
 
             <div id="loading" class="loading">
                 <div class="loading-spinner"></div>
-                <p>Creating your CRM superhero... This might take 30-60 seconds!</p>
+                <div class="progress-steps">
+                    <div class="progress-step active" id="step1">
+                        <div class="step-icon">📸</div>
+                        <div class="step-text">Analyzing photo</div>
+                    </div>
+                    <div class="progress-arrow">→</div>
+                    <div class="progress-step" id="step2">
+                        <div class="step-icon">🧠</div>
+                        <div class="step-text">Creating persona</div>
+                    </div>
+                    <div class="progress-arrow">→</div>
+                    <div class="progress-step" id="step3">
+                        <div class="step-icon">🎨</div>
+                        <div class="step-text">Generating figure</div>
+                    </div>
+                </div>
+                <p class="loading-message">Creating your CRM superhero... This might take 30-60 seconds!</p>
             </div>
 
             <div id="result" class="result">
@@ -514,6 +651,25 @@
             loading.style.display = 'block';
             submitBtn.disabled = true;
             submitBtn.textContent = '🔄 Creating Your Hero...';
+
+            // Animate progress steps
+            const steps = ['step1', 'step2', 'step3'];
+            steps.forEach(stepId => {
+                document.getElementById(stepId).classList.remove('active');
+            });
+
+            // Step 1: Analyzing photo
+            document.getElementById('step1').classList.add('active');
+
+            setTimeout(() => {
+                // Step 2: Creating persona
+                document.getElementById('step2').classList.add('active');
+            }, 2000);
+
+            setTimeout(() => {
+                // Step 3: Generating figure
+                document.getElementById('step3').classList.add('active');
+            }, 8000);
 
             try {
                 const response = await fetch('/api/generate-card', {
