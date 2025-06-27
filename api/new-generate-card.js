@@ -250,13 +250,17 @@ async function generateDallEImage(prompt, retries = 3) {
 router.post('/generate-card', upload.single('image'), async (req, res) => {
   try {
     console.log('Received request:', req.body);
-    const { role, painPoint, crmPersonality, email, bonusAccessory } = req.body;
+    const { role, painPoint, crmPersonality, email, bonusAccessory, customPainPoint, customAccessory } = req.body;
     const uploadedImage = req.file ? await processUploadedImage(req.file) : null;
 
     // Use detected gender from image analysis, or default to ambiguous
     const genderPreference = uploadedImage?.detectedGender || 'ambiguous';
 
-    if (!role || !painPoint || !crmPersonality || !email || !bonusAccessory) {
+    // Handle custom fields
+    const finalPainPoint = painPoint === 'Other' ? customPainPoint : painPoint;
+    const finalBonusAccessory = bonusAccessory === 'Other' ? customAccessory : bonusAccessory;
+
+    if (!role || !finalPainPoint || !crmPersonality || !email) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields'
@@ -269,7 +273,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
     let completion;
     try {
       // Create the user prompt with optional photo description
-      let userPrompt = `Create a CRM action figure persona based on this role: ${role}, pain point: ${painPoint}, personality: ${crmPersonality}, and gender preference: ${genderPreference}.`;
+      let userPrompt = `Create a CRM action figure persona based on this role: ${role}, pain point: ${finalPainPoint}, personality: ${crmPersonality}, and gender preference: ${genderPreference}.`;
 
       if (uploadedImage && uploadedImage.description) {
         userPrompt += ` The action figure should resemble this person: ${uploadedImage.description}. Make sure the action figure reflects their actual appearance and gender preference.`;
@@ -349,10 +353,10 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
 
             Title: "${persona.title}"
             Role: ${role}
-            Pain Point: ${painPoint}
+            Pain Point: ${finalPainPoint}
             Personality: ${crmPersonality}
             Gender Preference: ${genderPreference}
-            Bonus Accessory: ${bonusAccessory}
+            Bonus Accessory: ${finalBonusAccessory || 'none'}
             Quote: "${persona.quote}"
             ${uploadedImage && uploadedImage.description ? `\nPerson's Appearance: ${uploadedImage.description}` : ''}
 
@@ -363,6 +367,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - MUST say "single figure in packaging, no other people or figures"
             - MUST say "no multiple figures, no background people, no crowds"
             - MUST say "isolated single action figure product shot"
+            - ONLY show one person/figure unless uploaded image clearly shows multiple people
 
             1. FULL BODY REQUIREMENT (CRITICAL):
             - MUST say "full-body action figure from head to feet, completely visible"
@@ -392,12 +397,14 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             5. ACCESSORIES (EXACT ITEMS ONLY - MUST LOOK LIKE TOY ACCESSORIES):
             - Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'} (miniature toy version)
             - Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'} (miniature toy version)
-            - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[painPoint] || 'help manual'} (miniature toy version)
-            - Bonus accessory: ${bonusAccessory.toLowerCase()} (miniature toy version)
+            - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'} (miniature toy version)
+            - Bonus accessory: ${finalBonusAccessory ? finalBonusAccessory.toLowerCase() : 'none'} (miniature toy version)
             - ALL accessories must look like small plastic toy accessories that come with action figures
             - EXACTLY these 4 accessories only, NO additional items
             - NO beer bottles, NO extra shoes, NO random objects, NO duplicates
             - NO background items, NO environmental objects, NO props beyond the 4 specified accessories
+            - ABSOLUTELY NO GUNS, NO WEAPONS, NO FIREARMS of any kind
+            - NO violent or weapon-like accessories
 
             6. PACKAGING STYLE & RESTRICTIONS:
             - Vintage toy blister packaging with clear plastic front
@@ -432,7 +439,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         fallbackPrompt += ` The ${genderPreference} figure has realistic human eye color (brown, blue, green, or hazel), both eyes same color.`;
       }
 
-      const systematicAccessories = getSystematicAccessories(role, crmPersonality, painPoint, bonusAccessory);
+      const systematicAccessories = getSystematicAccessories(role, crmPersonality, finalPainPoint, finalBonusAccessory);
       fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes that match the outfit. Includes exactly these 4 specific miniature toy accessories only: ${systematicAccessories.join(', ')} (all as small plastic toy accessories), no other accessories, no beer bottles, no extra shoes, no random objects, no duplicates. Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
       dallePrompt = fallbackPrompt;
     }
@@ -447,10 +454,10 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         timestamp: new Date().toISOString(),
         email,
         role,
-        painPoint,
+        painPoint: finalPainPoint,
         crmPersonality,
         genderPreference,
-        bonusAccessory,
+        bonusAccessory: finalBonusAccessory || '',
         title: persona.title,
         quote: persona.quote
       }]);

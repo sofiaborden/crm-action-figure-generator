@@ -86,19 +86,20 @@
         }
 
         .disclaimer {
-            background: rgba(255, 193, 7, 0.15);
-            border: 2px solid rgba(255, 193, 7, 0.4);
-            border-radius: 12px;
-            padding: 15px 20px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 16px;
+            padding: 18px 24px;
             margin: 20px auto;
             max-width: 600px;
             font-size: 0.95rem;
-            color: #664d03;
+            color: #92400e;
             text-align: center;
             font-weight: 600;
-            line-height: 1.4;
+            line-height: 1.5;
             position: relative;
             z-index: 1;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
         }
 
         .form-container {
@@ -191,6 +192,12 @@
             font-weight: 600;
             color: var(--dark-color);
             font-size: 0.95rem;
+        }
+
+        .optional {
+            font-weight: 400;
+            color: #6b7280;
+            font-size: 0.85rem;
         }
 
         input, select, textarea {
@@ -483,9 +490,9 @@
                         </select>
                     </div>
 
-                    <div class="form-group full-width">
-                        <label for="bonusAccessory">Bonus Fun Accessory:</label>
-                        <select id="bonusAccessory" name="bonusAccessory" required>
+                    <div class="form-group">
+                        <label for="bonusAccessory">Bonus Fun Accessory: <span class="optional">(Optional)</span></label>
+                        <select id="bonusAccessory" name="bonusAccessory">
                             <option value="">Pick a fun extra...</option>
                             <option value="Baseball cap">Baseball cap</option>
                             <option value="Sunglasses">Sunglasses</option>
@@ -497,11 +504,12 @@
                             <option value="Scarf">Scarf</option>
                             <option value="Watch">Watch</option>
                             <option value="Backpack">Backpack</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="form-group full-width">
+                <div class="form-group">
                     <label for="painPoint">Your Biggest CRM Pain Point:</label>
                     <select id="painPoint" name="painPoint" required>
                         <option value="">What drives you crazy?</option>
@@ -519,11 +527,21 @@
                     </select>
                 </div>
 
-                <div class="form-group full-width" id="customPainPointGroup" style="display: none;">
-                    <label for="customPainPoint">Describe your pain point (max 100 characters):</label>
-                    <input type="text" id="customPainPoint" name="customPainPoint" maxlength="100" placeholder="What specific issue drives you crazy?">
-                    <small id="charCount">0/100 characters</small>
-                </div>
+            </div>
+
+            <div class="form-group full-width" id="customPainPointGroup" style="display: none;">
+                <label for="customPainPoint">Describe your pain point (max 100 characters):</label>
+                <input type="text" id="customPainPoint" name="customPainPoint" maxlength="100" placeholder="What specific issue drives you crazy?">
+                <small id="charCount">0/100 characters</small>
+            </div>
+
+            <div class="form-group full-width" id="customAccessoryGroup" style="display: none;">
+                <label for="customAccessory">Describe your accessory (max 30 characters):</label>
+                <input type="text" id="customAccessory" name="customAccessory" maxlength="30" placeholder="What fun accessory would you like?">
+                <small id="accessoryCharCount">0/30 characters</small>
+            </div>
+
+            <div class="form-grid">
 
                 <div class="form-group full-width">
                     <label for="image">Upload Your Photo (Optional):</label>
@@ -624,6 +642,34 @@
                 charCount.style.color = 'var(--danger-color)';
             } else {
                 charCount.style.color = '#6b7280';
+            }
+        });
+
+        // Handle bonus accessory custom option
+        const bonusAccessorySelect = document.getElementById('bonusAccessory');
+        const customAccessoryGroup = document.getElementById('customAccessoryGroup');
+        const customAccessoryInput = document.getElementById('customAccessory');
+        const accessoryCharCount = document.getElementById('accessoryCharCount');
+
+        bonusAccessorySelect.addEventListener('change', function(e) {
+            if (e.target.value === 'Other') {
+                customAccessoryGroup.style.display = 'block';
+                customAccessoryInput.required = true;
+            } else {
+                customAccessoryGroup.style.display = 'none';
+                customAccessoryInput.required = false;
+                customAccessoryInput.value = '';
+                accessoryCharCount.textContent = '0/30 characters';
+            }
+        });
+
+        customAccessoryInput.addEventListener('input', function(e) {
+            const length = e.target.value.length;
+            accessoryCharCount.textContent = `${length}/30 characters`;
+            if (length > 25) {
+                accessoryCharCount.style.color = 'var(--danger-color)';
+            } else {
+                accessoryCharCount.style.color = '#6b7280';
             }
         });
 
