@@ -194,6 +194,47 @@ router.get('/test', (req, res) => {
   res.send('Router is working!');
 });
 
+// Test Google Sheets connection (GET endpoint for browser testing)
+router.get('/test-sheets', async (req, res) => {
+  try {
+    // Test data
+    const testData = {
+      timestamp: new Date().toISOString(),
+      email: 'test@example.com',
+      role: 'Test Role',
+      painPoint: 'Test Pain Point',
+      crmPersonality: 'Test Personality',
+      genderPreference: 'test',
+      bonusAccessory: 'Test Accessory',
+      title: 'Test Action Figure',
+      quote: 'Test quote for Google Sheets integration!'
+    };
+
+    const success = await appendToGoogleSheet(testData);
+
+    if (success) {
+      res.json({
+        success: true,
+        message: '✅ Successfully added test data to Google Sheets!',
+        testData: testData,
+        spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`
+      });
+    } else {
+      res.json({
+        success: false,
+        message: '❌ Failed to add data to Google Sheets. Check server logs for details.',
+        testData: testData
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: '❌ Error testing Google Sheets integration'
+    });
+  }
+});
+
 // Google Sheets setup status endpoint
 router.get('/sheets-status', (req, res) => {
   const hasCredentials = !!(process.env.GOOGLE_SHEETS_PRIVATE_KEY && process.env.GOOGLE_SHEETS_CLIENT_EMAIL);
