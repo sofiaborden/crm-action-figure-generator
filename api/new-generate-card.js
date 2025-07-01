@@ -60,7 +60,7 @@ async function uploadToGoogleDrive(imageUrl, filename) {
     const drive = google.drive({ version: 'v3', auth });
 
     // Download the image from DALL-E URL
-    const fetch = (await import('node-fetch')).default;
+    const fetch = require('node-fetch');
     const response = await fetch(imageUrl);
     const buffer = await response.buffer();
 
@@ -295,6 +295,82 @@ router.get('/test-sheets', async (req, res) => {
       success: false,
       error: error.message,
       message: '❌ Error testing Google Sheets integration'
+    });
+  }
+});
+
+// Test Google Drive upload (GET endpoint for browser testing)
+router.get('/test-drive', async (req, res) => {
+  try {
+    // Create a simple test image (1x1 pixel PNG)
+    const testImageBuffer = Buffer.from([
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+      0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE, 0x00, 0x00, 0x00,
+      0x0C, 0x49, 0x44, 0x41, 0x54, 0x08, 0x99, 0x01, 0x01, 0x00, 0x00, 0x00,
+      0xFF, 0xFF, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, 0xE2, 0x21, 0xBC, 0x33,
+      0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+    ]);
+
+    // Test Google Drive upload
+    const filename = `test-drive-upload-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+
+    if (!process.env.GOOGLE_SHEETS_PRIVATE_KEY || !process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+      return res.json({
+        success: false,
+        message: '❌ Google Drive credentials not configured',
+        filename: filename
+      });
+    }
+
+    // Set up Google Auth
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        type: 'service_account',
+        private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_SHEETS_CLIENT_ID,
+        project_id: process.env.GOOGLE_SHEETS_PROJECT_ID,
+      },
+      scopes: ['https://www.googleapis.com/auth/drive.file'],
+    });
+
+    const drive = google.drive({ version: 'v3', auth });
+
+    // Upload to Google Drive
+    const fileMetadata = {
+      name: filename,
+      parents: [DRIVE_FOLDER_ID],
+    };
+
+    const media = {
+      mimeType: 'image/png',
+      body: testImageBuffer,
+    };
+
+    const file = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id,webViewLink,webContentLink',
+    });
+
+    res.json({
+      success: true,
+      message: '✅ Successfully uploaded test image to Google Drive!',
+      filename: filename,
+      driveResult: {
+        fileId: file.data.id,
+        viewLink: file.data.webViewLink,
+        downloadLink: file.data.webContentLink
+      },
+      folderUrl: `https://drive.google.com/drive/folders/${DRIVE_FOLDER_ID}`
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: '❌ Error testing Google Drive integration'
     });
   }
 });
