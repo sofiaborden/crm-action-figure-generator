@@ -7,6 +7,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const csvWriter = require('csv-writer').createObjectCsvWriter;
+const { google } = require('googleapis');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -28,6 +29,66 @@ const OpenAI = require('openai');
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+// Google Sheets configuration
+const SPREADSHEET_ID = '1jzl2flzNhFRIAySOvSzuf2osIjX9Z0RO3xgW1YrbQpw';
+const SHEET_NAME = 'Sheet1'; // Default sheet name, can be changed
+
+// Google Sheets helper function
+async function appendToGoogleSheet(data) {
+  try {
+    // Check if Google Sheets credentials are available
+    if (!process.env.GOOGLE_SHEETS_PRIVATE_KEY || !process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+      console.log('📊 Google Sheets credentials not configured, skipping...');
+      console.log('🔗 Spreadsheet URL: https://docs.google.com/spreadsheets/d/1jzl2flzNhFRIAySOvSzuf2osIjX9Z0RO3xgW1YrbQpw/edit');
+      return false;
+    }
+
+    // Set up Google Sheets API authentication
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        type: 'service_account',
+        private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_SHEETS_CLIENT_ID,
+        project_id: process.env.GOOGLE_SHEETS_PROJECT_ID,
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    // Prepare the row data
+    const values = [[
+      data.timestamp,
+      data.email,
+      data.role,
+      data.painPoint,
+      data.crmPersonality,
+      data.genderPreference,
+      data.bonusAccessory,
+      data.title,
+      data.quote
+    ]];
+
+    // Append to the sheet
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEET_NAME}!A:I`, // Columns A through I
+      valueInputOption: 'RAW',
+      insertDataOption: 'INSERT_ROWS',
+      resource: {
+        values: values,
+      },
+    });
+
+    console.log('✅ Successfully appended to Google Sheets:', response.data.updates);
+    return true;
+  } catch (error) {
+    console.error('❌ Error appending to Google Sheets:', error);
+    return false;
+  }
+}
 
 // Systematic Accessory Mapping System
 const ACCESSORY_MAPPINGS = {
@@ -131,6 +192,100 @@ const writer = csvWriter({
 // Simple test route
 router.get('/test', (req, res) => {
   res.send('Router is working!');
+});
+
+// Google Sheets setup status endpoint
+router.get('/sheets-status', (req, res) => {
+  const hasCredentials = !!(process.env.GOOGLE_SHEETS_PRIVATE_KEY && process.env.GOOGLE_SHEETS_CLIENT_EMAIL);
+
+  res.json({
+    configured: hasCredentials,
+    spreadsheetId: SPREADSHEET_ID,
+    spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`,
+    requiredEnvVars: [
+      'GOOGLE_SHEETS_PRIVATE_KEY',
+      'GOOGLE_SHEETS_CLIENT_EMAIL',
+      'GOOGLE_SHEETS_CLIENT_ID',
+      'GOOGLE_SHEETS_PROJECT_ID'
+    ],
+    currentStatus: {
+      GOOGLE_SHEETS_PRIVATE_KEY: !!process.env.GOOGLE_SHEETS_PRIVATE_KEY,
+      GOOGLE_SHEETS_CLIENT_EMAIL: !!process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+      GOOGLE_SHEETS_CLIENT_ID: !!process.env.GOOGLE_SHEETS_CLIENT_ID,
+      GOOGLE_SHEETS_PROJECT_ID: !!process.env.GOOGLE_SHEETS_PROJECT_ID
+    }
+  });
+});
+
+// Bulk upload existing CSV data to Google Sheets
+router.post('/sync-to-sheets', async (req, res) => {
+  try {
+    const csvPath = path.join(__dirname, '..', 'submissions.csv');
+
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).json({ error: 'CSV file not found' });
+    }
+
+    // Check if Google Sheets is configured
+    if (!process.env.GOOGLE_SHEETS_PRIVATE_KEY || !process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+      return res.status(400).json({
+        error: 'Google Sheets not configured',
+        message: 'Please set up Google Sheets credentials first'
+      });
+    }
+
+    const csvContent = fs.readFileSync(csvPath, 'utf8');
+    const lines = csvContent.trim().split('\n');
+
+    // Parse CSV data (current format without headers)
+    const submissions = lines.map(line => {
+      const [timestamp, email, role, painPoint, personality, title, quote] = line.split(',');
+      return {
+        timestamp: timestamp || '',
+        email: email || '',
+        role: role || '',
+        painPoint: painPoint || '',
+        crmPersonality: personality || '',
+        genderPreference: 'legacy', // Old data doesn't have this
+        bonusAccessory: '', // Old data doesn't have this
+        title: title || '',
+        quote: quote || ''
+      };
+    }).filter(sub => sub.timestamp); // Remove empty lines
+
+    console.log(`📊 Syncing ${submissions.length} submissions to Google Sheets...`);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Upload each submission
+    for (const submission of submissions) {
+      const success = await appendToGoogleSheet(submission);
+      if (success) {
+        successCount++;
+      } else {
+        errorCount++;
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    res.json({
+      success: true,
+      message: `Sync completed: ${successCount} successful, ${errorCount} failed`,
+      totalProcessed: submissions.length,
+      successCount,
+      errorCount
+    });
+
+  } catch (error) {
+    console.error('Error syncing to Google Sheets:', error);
+    res.status(500).json({
+      error: 'Failed to sync to Google Sheets',
+      details: error.message
+    });
+  }
 });
 
 
@@ -483,23 +638,34 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
     console.log('Generating image with DALL-E...');
     const imageUrl = await generateDallEImage(dallePrompt);
     
-    // Log submission to CSV
+    // Log submission to CSV and Google Sheets
+    const submissionData = {
+      timestamp: new Date().toISOString(),
+      email,
+      role,
+      painPoint: finalPainPoint,
+      crmPersonality,
+      genderPreference,
+      bonusAccessory: finalBonusAccessory || '',
+      title: persona.title,
+      quote: persona.quote
+    };
+
     try {
-      await writer.writeRecords([{
-        timestamp: new Date().toISOString(),
-        email,
-        role,
-        painPoint: finalPainPoint,
-        crmPersonality,
-        genderPreference,
-        bonusAccessory: finalBonusAccessory || '',
-        title: persona.title,
-        quote: persona.quote
-      }]);
-      console.log('Submission logged to CSV');
+      await writer.writeRecords([submissionData]);
+      console.log('✅ Submission logged to CSV');
     } catch (csvError) {
-      console.error('Error logging to CSV:', csvError);
+      console.error('❌ Error logging to CSV:', csvError);
       // Continue despite CSV error
+    }
+
+    // Also log to Google Sheets
+    try {
+      await appendToGoogleSheet(submissionData);
+      console.log('✅ Submission logged to Google Sheets');
+    } catch (sheetsError) {
+      console.error('❌ Error logging to Google Sheets:', sheetsError);
+      // Continue despite Sheets error
     }
     
     // Return the generated card data
