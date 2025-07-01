@@ -66,6 +66,7 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
+            z-index: 10;
         }
 
         .header::before {
@@ -528,10 +529,10 @@
 
         .footer-content {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            flex-wrap: wrap;
         }
 
         .footer-text-logo {
