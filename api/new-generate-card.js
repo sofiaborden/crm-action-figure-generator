@@ -32,7 +32,67 @@ const openai = new OpenAI({
 
 // Google Sheets configuration
 const SPREADSHEET_ID = '1jzl2flzNhFRIAySOvSzuf2osIjX9Z0RO3xgW1YrbQpw';
-const SHEET_NAME = 'Sheet1'; // Default sheet name, can be changed
+const SHEET_NAME = 'Sheet1';
+
+// Google Drive configuration
+const DRIVE_FOLDER_ID = '171LV7BAlL0Z6uKjpRJywaqW-lzMlchF1'; // Default sheet name, can be changed
+
+// Google Drive helper function
+async function uploadToGoogleDrive(imageUrl, filename) {
+  try {
+    if (!process.env.GOOGLE_SHEETS_PRIVATE_KEY || !process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+      console.log('📁 Google Drive credentials not configured, skipping...');
+      return null;
+    }
+
+    // Set up Google Auth
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        type: 'service_account',
+        private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_SHEETS_CLIENT_ID,
+        project_id: process.env.GOOGLE_SHEETS_PROJECT_ID,
+      },
+      scopes: ['https://www.googleapis.com/auth/drive.file'],
+    });
+
+    const drive = google.drive({ version: 'v3', auth });
+
+    // Download the image from DALL-E URL
+    const fetch = (await import('node-fetch')).default;
+    const response = await fetch(imageUrl);
+    const buffer = await response.buffer();
+
+    // Upload to Google Drive
+    const fileMetadata = {
+      name: filename,
+      parents: [DRIVE_FOLDER_ID],
+    };
+
+    const media = {
+      mimeType: 'image/png',
+      body: buffer,
+    };
+
+    const file = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id,webViewLink,webContentLink',
+    });
+
+    console.log('✅ Successfully uploaded to Google Drive:', file.data.id);
+    return {
+      fileId: file.data.id,
+      viewLink: file.data.webViewLink,
+      downloadLink: file.data.webContentLink
+    };
+
+  } catch (error) {
+    console.error('❌ Error uploading to Google Drive:', error);
+    return null;
+  }
+}
 
 // Google Sheets helper function
 async function appendToGoogleSheet(data) {
@@ -68,13 +128,15 @@ async function appendToGoogleSheet(data) {
       data.genderPreference,
       data.bonusAccessory,
       data.title,
-      data.quote
+      data.quote,
+      data.driveFileId || '',
+      data.driveViewLink || ''
     ]];
 
     // Append to the sheet
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:I`, // Columns A through I
+      range: `${SHEET_NAME}!A:K`, // Columns A through K (added Drive columns)
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       resource: {
@@ -207,7 +269,9 @@ router.get('/test-sheets', async (req, res) => {
       genderPreference: 'test',
       bonusAccessory: 'Test Accessory',
       title: 'Test Action Figure',
-      quote: 'Test quote for Google Sheets integration!'
+      quote: 'Test quote for Google Sheets integration!',
+      driveFileId: 'test-file-id',
+      driveViewLink: 'https://drive.google.com/file/d/test-file-id/view'
     };
 
     const success = await appendToGoogleSheet(testData);
@@ -678,7 +742,12 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
     // Generate image using DALL-E with the detailed prompt and retry logic
     console.log('Generating image with DALL-E...');
     const imageUrl = await generateDallEImage(dallePrompt);
-    
+
+    // Upload image to Google Drive (if configured)
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `action-figure-${timestamp}-${email.replace('@', '-at-')}.png`;
+    const driveResult = await uploadToGoogleDrive(imageUrl, filename);
+
     // Log submission to CSV and Google Sheets
     const submissionData = {
       timestamp: new Date().toISOString(),
@@ -689,7 +758,9 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       genderPreference,
       bonusAccessory: finalBonusAccessory || '',
       title: persona.title,
-      quote: persona.quote
+      quote: persona.quote,
+      driveFileId: driveResult?.fileId || '',
+      driveViewLink: driveResult?.viewLink || ''
     };
 
     try {
