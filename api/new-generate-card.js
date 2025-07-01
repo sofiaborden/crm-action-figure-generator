@@ -72,7 +72,7 @@ async function uploadToGoogleDrive(imageUrl, filename) {
 
     const media = {
       mimeType: 'image/png',
-      body: buffer,
+      body: require('stream').Readable.from(buffer),
     };
 
     const file = await drive.files.create({
@@ -345,7 +345,7 @@ router.get('/test-drive', async (req, res) => {
 
     const media = {
       mimeType: 'image/png',
-      body: testImageBuffer,
+      body: require('stream').Readable.from(testImageBuffer),
     };
 
     const file = await drive.files.create({
