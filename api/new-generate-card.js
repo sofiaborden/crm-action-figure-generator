@@ -92,9 +92,14 @@ function getSystematicAccessories(role, personality, painPoint, bonusAccessory) 
     accessories.push(painPointAccessory);
   }
 
-  // Add bonus accessory
-  if (bonusAccessory) {
-    accessories.push(bonusAccessory.toLowerCase());
+  // Add bonus accessory (filter null/undefined cleanly)
+  if (bonusAccessory &&
+      bonusAccessory !== 'none' &&
+      bonusAccessory !== '' &&
+      bonusAccessory !== null &&
+      bonusAccessory !== undefined &&
+      bonusAccessory.trim() !== '') {
+    accessories.push(bonusAccessory.toLowerCase().trim());
   }
 
   return accessories.slice(0, 4); // Max 4 accessories
@@ -338,18 +343,36 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         model: "gpt-4",
         messages: [
           {
-            role: "system", 
-            content: `You are an expert at creating detailed, creative prompts for DALL-E image generation.
-            You specialize in creating prompts that generate high-quality, photorealistic 3D renders of action figures in vintage packaging.
-            Your prompts consistently produce images that look like professional product photography of actual toys.
+            role: "system",
+            content: `You are an expert at creating detailed, controlled prompts for DALL-E image generation that produce consistent, professional action figure packaging.
 
-            CRITICAL: Your prompts MUST always specify "full-body action figure from head to feet, completely visible" and "no body parts cut off or cropped" to ensure the entire figure is shown. You MUST be extremely explicit about showing the complete figure including legs and feet.
+            CRITICAL REQUIREMENTS - MUST INCLUDE ALL:
 
-            CRITICAL: Your prompts MUST specify exact packaging text requirements with readable fonts and realistic eye colors matching uploaded image descriptions. The packaging text must be clearly visible and professionally formatted like real toy packaging.`
+            1. FIGURE COUNT: Generate exactly 1 action figure unless multiple people are clearly visible in uploaded image. If multiple people detected, generate same number of figures matching appearances, no duplicates.
+
+            2. PACKAGING DESIGN (EXACT SPECIFICATIONS):
+            - Background color: #32859a (Julep brand color)
+            - Large top title: "Julep Confessionals" in white, bold, clean, modern font
+            - Below it: persona title in white, bold, same font style and size
+            - NO other words, text, or labels anywhere on packaging
+            - Clear plastic blister packaging with cardboard backing
+
+            3. VISUAL CONSTRAINTS:
+            - Full-body figure from head to feet, completely visible
+            - No body parts cut off or cropped
+            - Clean background, no clutter
+            - Professional toy product photography style
+            - No weapons, no extra random objects
+
+            4. ACCESSORY CONTROL (EXACTLY 3-4 ITEMS ONLY):
+            - Use ONLY the specific accessories provided in the prompt
+            - Each accessory as miniature toy version in packaging
+            - Bonus accessory MUST be worn/held by figure if provided
+            - NO additional random accessories beyond those specified`
           },
           {
             role: "user",
-            content: `Create a DALL-E prompt for a satirical CRM action figure based on:
+            content: `Create a DALL-E prompt for a CRM action figure based on:
 
             Title: "${persona.title}"
             Role: ${role}
@@ -360,72 +383,62 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             Quote: "${persona.quote}"
             ${uploadedImage && uploadedImage.description ? `\nPerson's Appearance: ${uploadedImage.description}` : ''}
 
+            EXACT ACCESSORIES TO INCLUDE (numbered list):
+            1. Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}
+            2. Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}
+            3. Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `\n            4. Bonus accessory: ${finalBonusAccessory} (MUST be worn or held by figure)` : ''}
+
             MANDATORY DALL-E PROMPT REQUIREMENTS - MUST INCLUDE ALL:
 
-            0. SINGLE FIGURE REQUIREMENT (ABSOLUTELY CRITICAL):
-            - MUST say "exactly ONE action figure only"
-            - MUST say "single figure in packaging, no other people or figures"
-            - MUST say "no multiple figures, no background people, no crowds"
-            - MUST say "isolated single action figure product shot"
-            - If uploaded image shows multiple people, create multiple action figures; otherwise create only ONE action figure
-            - NEVER add random people or extra figures not in the uploaded image
+            1. FIGURE COUNT (CRITICAL):
+            - Generate exactly 1 action figure unless multiple people clearly visible in uploaded image
+            - If multiple people detected, generate same number of figures matching appearances
+            - No duplicates of same figure
+            - Single figure in packaging, no random background people
 
-            1. FULL BODY REQUIREMENT (CRITICAL):
-            - MUST say "full-body action figure from head to feet, completely visible"
-            - MUST say "standing pose showing entire body including legs and feet"
-            - MUST say "no body parts cut off or cropped"
-            - MUST say "complete figure visible in packaging"
-            - MUST say "wearing appropriate shoes that match the outfit"
-            - MUST say "full legs and feet visible with proper footwear"
+            2. FULL BODY REQUIREMENT (CRITICAL):
+            - Full-body action figure from head to feet, completely visible
+            - Standing pose showing entire body including legs and feet
+            - No body parts cut off or cropped
+            - Wearing appropriate shoes that match the outfit
+            - Complete figure visible in clear plastic blister packaging
 
-            2. PACKAGING TEXT (EXACT REQUIREMENTS - MUST BE READABLE AND CONSISTENT):
-            - LARGE TITLE: "Julep Confessionals" in big, bold, sans-serif font at the top (white text on colored background)
-            - SMALLER SUBTITLE: "${persona.title}" in medium-sized, clean font below the main title (white or light colored text)
-            - FONT REQUIREMENTS: Use clean, modern, readable fonts like Arial, Helvetica, or similar sans-serif
-            - TEXT MUST BE CLEARLY READABLE and properly sized for toy packaging
-            - These are the ONLY two text elements allowed on the packaging
-            - NO quotes, NO other words, NO additional text anywhere on the package
-            - NO picture of action figure on the packaging - keep packaging simple and clean
-            - Clean, professional toy packaging design with only these two text titles
-            - Text should be positioned clearly and professionally like real toy packaging
+            3. PACKAGING DESIGN (EXACT SPECIFICATIONS):
+            - Background color: #32859a (Julep brand color)
+            - Large top title: "Julep Confessionals" in white, bold, clean, modern font
+            - Below it: "${persona.title}" in white, bold, same font style and size
+            - NO other words, text, or labels anywhere on packaging
+            - Clear plastic blister packaging with cardboard backing
+            - Clean, professional toy packaging design
+            - NO picture of action figure on the packaging
 
-            3. EYE COLOR (CRITICAL):
-            ${uploadedImage && uploadedImage.description ? `- MUST match the eye color from uploaded image description: ${uploadedImage.description}` : '- Realistic human eye color (brown, blue, green, or hazel)'}
-            - Both eyes MUST be the same color
-            - NO multicolored, rainbow, or skin-colored eyes
-            - Clear, realistic human eyes
+            4. EYE COLOR (CRITICAL):
+            ${uploadedImage && uploadedImage.description ? `- Match eye color from uploaded image description: ${uploadedImage.description}` : '- Realistic human eye color (brown, blue, green, or hazel)'}
+            - Both eyes same color, clear, realistic human eyes
 
-            4. CLOTHING:
+            5. CLOTHING:
             ${uploadedImage && uploadedImage.description ? `- Match clothing from image if visible, otherwise dark professional casual outfit` : 'Dark professional casual clothing (dark pants, shirt)'}
             - Professional appearance suitable for nonprofit work
 
-            5. ACCESSORIES (EXACT ITEMS ONLY - MUST LOOK LIKE TOY ACCESSORIES):
-            - Role accessory: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'} (miniature toy version)
-            - Personality accessory: ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'} (miniature toy version)
-            - Pain point accessory: ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'} (miniature toy version)
-            - Bonus accessory: ${finalBonusAccessory ? finalBonusAccessory.toLowerCase() + ' (MUST be worn or held by the action figure, visible on the figure)' : 'none'}
-            - Show each accessory only ONCE - no duplicates
-            - ALL accessories must look like small plastic toy accessories that come with action figures
-            - If bonus accessory is selected, it must be clearly worn or held by the figure
-            - EXACTLY these 4 accessories only, NO additional items
-            - NO beer bottles, NO extra shoes, NO random objects, NO duplicates
-            - NO background items, NO environmental objects, NO props beyond the 4 specified accessories
-            - ABSOLUTELY NO GUNS, NO WEAPONS, NO FIREARMS of any kind
-            - NO violent or weapon-like accessories
+            6. ACCESSORIES (EXACTLY ${finalBonusAccessory ? '4' : '3'} ITEMS ONLY):
+            - Include ONLY the numbered accessories listed above
+            - Each accessory as miniature toy version in packaging
+            - Bonus accessory MUST be worn or held by figure if provided
+            - NO additional random accessories (no soda cans, glasses, text cards)
+            - NO weapons, NO firearms of any kind
+            - NO extra objects beyond the specified ${finalBonusAccessory ? '4' : '3'} accessories
 
-            6. PACKAGING STYLE & RESTRICTIONS:
-            - Vintage toy blister packaging with clear plastic front
-            - Cardboard backing with clean design
+            7. VISUAL STYLE:
+            - Clear plastic blister packaging with cardboard backing
             - Professional toy product photography
-            - CLEAN white or neutral background, NO busy backgrounds
-            - NO other products, NO multiple packages, NO store shelves
-            - SINGLE package only, isolated product shot
-            - NO text anywhere except the two specified titles on packaging
+            - Clean background, no clutter
+            - Single package only, isolated product shot
+            - Modern collectible action figure packaging style
 
             CREATE THE EXACT DALL-E PROMPT NOW:
-            Start with: "Photorealistic 3D render of exactly ONE ${genderPreference} action figure only, full-body from head to feet completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, single figure in clear plastic blister packaging with cardboard backing, no other people or figures, isolated product shot. Large brand name 'Julep Confessionals' at top of packaging, character name '${persona.title}' prominently displayed below, no other text anywhere on packaging."
+            Use this template: "Create a 2D digital image of an action figure in realistic toy packaging with a clear plastic window. The packaging background color is #32859a with white, bold, consistent font displaying 'Julep Confessionals' at the top and '${persona.title}' below it. The action figure should reflect the provided physical appearance, worn clothing, and pose. The figure should have exactly ${finalBonusAccessory ? '4' : '3'} accessories: [list the specific accessories]. Accessories should appear as miniature toy versions in the packaging, with no extra items or text. Show the full body, including feet. The style should resemble modern collectible action figure packaging."
 
-            Include the appearance and accessories details, then end with: "Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style."
+            Include appearance details and end with: "Professional toy product photography, studio lighting, highly detailed."
 
             NO quotation marks in your response.`
           }
@@ -438,16 +451,19 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       console.log('Generated DALL-E prompt:', dallePrompt);
     } catch (promptError) {
       console.error('Error generating DALL-E prompt:', promptError);
-      let fallbackPrompt = `Photorealistic 3D render of exactly ONE ${genderPreference} action figure only, full-body from head to feet completely visible, standing pose showing entire body including legs and feet, no body parts cut off or cropped, single figure in clear plastic blister packaging with cardboard backing, no other people or figures, isolated product shot, clean white background. Large brand name "Julep Confessionals" at top of packaging, character name "${persona.title}" prominently displayed below, no other text anywhere on packaging. The figure represents a ${role} with ${crmPersonality} personality.`;
+
+      // Clean systematic accessories list
+      const systematicAccessories = getSystematicAccessories(role, crmPersonality, finalPainPoint, finalBonusAccessory);
+
+      let fallbackPrompt = `Create a 2D digital image of an action figure in realistic toy packaging with a clear plastic window. The packaging background color is #32859a with white, bold, consistent font displaying "Julep Confessionals" at the top and "${persona.title}" below it. The action figure represents a ${role} with ${crmPersonality} personality.`;
 
       if (uploadedImage && uploadedImage.description) {
-        fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with realistic matching eye color from the uploaded image, both eyes same color, no multicolored eyes.`;
+        fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with realistic matching eye color from the uploaded image.`;
       } else {
-        fallbackPrompt += ` The ${genderPreference} figure has realistic human eye color (brown, blue, green, or hazel), both eyes same color.`;
+        fallbackPrompt += ` The ${genderPreference} figure has realistic human eye color (brown, blue, green, or hazel).`;
       }
 
-      const systematicAccessories = getSystematicAccessories(role, crmPersonality, finalPainPoint, finalBonusAccessory);
-      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes that match the outfit. Includes exactly these 4 specific miniature toy accessories only: ${systematicAccessories.join(', ')} (all as small plastic toy accessories), no other accessories, no beer bottles, no extra shoes, no random objects, no duplicates. Professional toy product photography, studio lighting, highly detailed, vintage action figure packaging style.`;
+      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes. The figure should have exactly ${systematicAccessories.length} accessories: ${systematicAccessories.join(', ')} (all as miniature toy versions in packaging). ${finalBonusAccessory ? `The ${finalBonusAccessory} must be worn or held by the figure. ` : ''}No extra items or text. Show the full body, including feet. Professional toy product photography, studio lighting, highly detailed.`;
       dallePrompt = fallbackPrompt;
     }
     
