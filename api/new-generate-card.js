@@ -371,7 +371,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - No body parts cut off or cropped
             - Clean background, no clutter
             - Professional toy product photography style
-            - No weapons, no extra random objects
+            - No weapons, no alcoholic beverages, no extra random objects
             - EXPRESSIVE FACIAL FEATURES: confident smile, bright eyes, engaging expression that matches uploaded photo personality
 
             4. ACCESSORY CONTROL (EXACTLY 3-4 ITEMS ONLY):
@@ -437,7 +437,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - Each accessory as miniature toy version in packaging
             - Bonus accessory MUST be worn or held by figure if provided
             - NO additional random accessories (no soda cans, glasses, text cards)
-            - NO weapons, NO firearms of any kind
+            - NO weapons, NO firearms, NO alcoholic beverages of any kind
             - NO extra objects beyond the specified ${finalBonusAccessory ? '4' : '3'} accessories
 
             7. VISUAL STYLE:
@@ -475,7 +475,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         fallbackPrompt += ` The ${genderPreference} figure has expressive facial features (confident smile, bright engaging eyes), realistic human eye color (brown, blue, green, or hazel).`;
       }
 
-      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes. The figure should have exactly ${systematicAccessories.length} accessories: ${systematicAccessories.join(', ')} (all as miniature toy versions in packaging). ${finalBonusAccessory ? `CRITICAL: The action figure must be actively wearing or holding the ${finalBonusAccessory} - this is essential. ` : ''}No extra items or text. Show the full body, including feet. Professional toy product photography, studio lighting, highly detailed.`;
+      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes. The figure should have exactly ${systematicAccessories.length} accessories: ${systematicAccessories.join(', ')} (all as miniature toy versions in packaging). ${finalBonusAccessory ? `CRITICAL: The action figure must be actively wearing or holding the ${finalBonusAccessory} - this is essential. ` : ''}No extra items or text. No weapons, no alcoholic beverages. Show the full body, including feet. Professional toy product photography, studio lighting, highly detailed.`;
       dallePrompt = fallbackPrompt;
     }
     
