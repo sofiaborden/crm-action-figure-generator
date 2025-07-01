@@ -43,18 +43,19 @@ const ACCESSORY_MAPPINGS = {
     'Database Administrator': 'computer server',
     'Development Associate': 'donor database printout',
     'Major Gifts Officer': 'handshake gesture',
-    'Event Coordinator': 'event planning checklist'
+    'Event Coordinator': 'event planning checklist',
+    'Other': 'briefcase'
   },
   personalities: {
-    'The Micromanager': 'magnifying glass',
-    'The Data Hoarder': 'filing cabinet',
-    'The Tech Avoider': 'paper and pen',
-    'The Process Obsessed': 'flowchart diagram',
-    'The Relationship Builder': 'networking business cards',
-    'The Efficiency Expert': 'stopwatch',
-    'The Dashboard Addict': 'computer monitor with charts',
-    'The Automation Enthusiast': 'robot assistant',
-    'The Reluctant User': 'help manual',
+    'Micromanager': 'magnifying glass',
+    'Data Hoarder': 'filing cabinet',
+    'Tech Avoider': 'paper and pen',
+    'Process Obsessed': 'flowchart diagram',
+    'Relationship Builder': 'networking business cards',
+    'Efficiency Expert': 'stopwatch',
+    'Dashboard Addict': 'computer monitor with charts',
+    'Automation Enthusiast': 'robot assistant',
+    'Reluctant User': 'help manual',
     'Other': 'question mark sign'
   },
   painPoints: {
@@ -363,12 +364,14 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - Clean background, no clutter
             - Professional toy product photography style
             - No weapons, no extra random objects
+            - EXPRESSIVE FACIAL FEATURES: confident smile, bright eyes, engaging expression that matches uploaded photo personality
 
             4. ACCESSORY CONTROL (EXACTLY 3-4 ITEMS ONLY):
-            - Use ONLY the specific accessories provided in the prompt
+            - Use ONLY the specific accessories provided in the numbered list
             - Each accessory as miniature toy version in packaging
-            - Bonus accessory MUST be worn/held by figure if provided
-            - NO additional random accessories beyond those specified`
+            - Bonus accessory MUST be physically worn or held by the figure (not just in packaging)
+            - NO additional random accessories beyond those specified
+            - NO duplicate accessories or variations of listed items`
           },
           {
             role: "user",
@@ -436,7 +439,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - Modern collectible action figure packaging style
 
             CREATE THE EXACT DALL-E PROMPT NOW:
-            Use this template: "Create a 2D digital image of an action figure in realistic toy packaging with a clear plastic window. The packaging background color is #32859a with white, bold, consistent font displaying 'Julep Confessionals' at the top and '${persona.title}' below it. The action figure should reflect the provided physical appearance, worn clothing, and pose. The figure should have exactly ${finalBonusAccessory ? '4' : '3'} accessories: [list the specific accessories]. Accessories should appear as miniature toy versions in the packaging, with no extra items or text. Show the full body, including feet. The style should resemble modern collectible action figure packaging."
+            Use this template: "Create a 2D digital image of an action figure in realistic toy packaging with a clear plastic window. The packaging background color is #32859a with white, bold, consistent font displaying 'Julep Confessionals' at the top and '${persona.title}' below it. The action figure should reflect the provided physical appearance with expressive facial features (confident smile, bright engaging eyes). The figure should have exactly ${finalBonusAccessory ? '4' : '3'} accessories: [list the specific accessories]. ${finalBonusAccessory ? `The ${finalBonusAccessory} must be physically worn or held by the action figure. ` : ''}All accessories should appear as miniature toy versions in the packaging, with no extra items or text. Show the full body, including feet. The style should resemble modern collectible action figure packaging."
 
             Include appearance details and end with: "Professional toy product photography, studio lighting, highly detailed."
 
@@ -458,12 +461,12 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       let fallbackPrompt = `Create a 2D digital image of an action figure in realistic toy packaging with a clear plastic window. The packaging background color is #32859a with white, bold, consistent font displaying "Julep Confessionals" at the top and "${persona.title}" below it. The action figure represents a ${role} with ${crmPersonality} personality.`;
 
       if (uploadedImage && uploadedImage.description) {
-        fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with realistic matching eye color from the uploaded image.`;
+        fallbackPrompt += ` The action figure matches this appearance: ${uploadedImage.description}, with expressive facial features (confident smile, bright engaging eyes), realistic matching eye color from the uploaded image.`;
       } else {
-        fallbackPrompt += ` The ${genderPreference} figure has realistic human eye color (brown, blue, green, or hazel).`;
+        fallbackPrompt += ` The ${genderPreference} figure has expressive facial features (confident smile, bright engaging eyes), realistic human eye color (brown, blue, green, or hazel).`;
       }
 
-      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes. The figure should have exactly ${systematicAccessories.length} accessories: ${systematicAccessories.join(', ')} (all as miniature toy versions in packaging). ${finalBonusAccessory ? `The ${finalBonusAccessory} must be worn or held by the figure. ` : ''}No extra items or text. Show the full body, including feet. Professional toy product photography, studio lighting, highly detailed.`;
+      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes. The figure should have exactly ${systematicAccessories.length} accessories: ${systematicAccessories.join(', ')} (all as miniature toy versions in packaging). ${finalBonusAccessory ? `The ${finalBonusAccessory} must be physically worn or held by the action figure. ` : ''}No extra items or text. Show the full body, including feet. Professional toy product photography, studio lighting, highly detailed.`;
       dallePrompt = fallbackPrompt;
     }
     
