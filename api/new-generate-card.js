@@ -32,7 +32,7 @@ const openai = new OpenAI({
 // Systematic Accessory Mapping System
 const ACCESSORY_MAPPINGS = {
   roles: {
-    'Development Director': 'fundraising thermometer',
+    'Development Director': 'large fundraising goal thermometer with dollar amounts',
     'Fundraising Manager': 'donation box',
     'Donor Relations Manager': 'thank you card',
     'Grant Writer': 'stack of grant applications',
@@ -266,6 +266,14 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
     const finalPainPoint = painPoint === 'Other' ? customPainPoint : painPoint;
     const finalBonusAccessory = bonusAccessory === 'Other' ? customAccessory : bonusAccessory;
 
+    // Debug log for bonus accessory
+    console.log('🎯 BONUS ACCESSORY DEBUG:', {
+      originalBonusAccessory: bonusAccessory,
+      customAccessory: customAccessory,
+      finalBonusAccessory: finalBonusAccessory,
+      willIncludeInPrompt: !!finalBonusAccessory
+    });
+
     if (!role || !finalPainPoint || !crmPersonality || !email) {
       return res.status(400).json({
         success: false,
@@ -369,9 +377,10 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             4. ACCESSORY CONTROL (EXACTLY 3-4 ITEMS ONLY):
             - Use ONLY the specific accessories provided in the numbered list
             - Each accessory as miniature toy version in packaging
-            - Bonus accessory MUST be physically worn or held by the figure (not just in packaging)
+            - If bonus accessory is listed (#4), it MUST be physically worn or held by the figure (not just loose in packaging)
             - NO additional random accessories beyond those specified
-            - NO duplicate accessories or variations of listed items`
+            - NO duplicate accessories or variations of listed items
+            - CRITICAL: If 4 accessories are listed, ALL 4 must be included`
           },
           {
             role: "user",
@@ -439,7 +448,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - Modern collectible action figure packaging style
 
             CREATE THE EXACT DALL-E PROMPT NOW:
-            Use this template: "Create a 2D digital image of an action figure in realistic toy packaging with a clear plastic window. The packaging background color is #32859a with white, bold, consistent font displaying 'Julep Confessionals' at the top and '${persona.title}' below it. The action figure should reflect the provided physical appearance with expressive facial features (confident smile, bright engaging eyes). The figure should have exactly ${finalBonusAccessory ? '4' : '3'} accessories: [list the specific accessories]. ${finalBonusAccessory ? `The ${finalBonusAccessory} must be physically worn or held by the action figure. ` : ''}All accessories should appear as miniature toy versions in the packaging, with no extra items or text. Show the full body, including feet. The style should resemble modern collectible action figure packaging."
+            Use this template: "Create a 2D digital image of an action figure in realistic toy packaging with a clear plastic window. The packaging background color is #32859a with white, bold, consistent font displaying 'Julep Confessionals' at the top and '${persona.title}' below it. The action figure should reflect the provided physical appearance with expressive facial features (confident smile, bright engaging eyes). The figure should have exactly ${finalBonusAccessory ? '4' : '3'} accessories: [list ALL the specific accessories from the numbered list]. ${finalBonusAccessory ? `CRITICAL: The action figure must be actively wearing or holding the ${finalBonusAccessory} - this is essential. ` : ''}All accessories should appear as miniature toy versions in the packaging, with no extra items or text. Show the full body, including feet. The style should resemble modern collectible action figure packaging."
 
             Include appearance details and end with: "Professional toy product photography, studio lighting, highly detailed."
 
@@ -466,7 +475,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
         fallbackPrompt += ` The ${genderPreference} figure has expressive facial features (confident smile, bright engaging eyes), realistic human eye color (brown, blue, green, or hazel).`;
       }
 
-      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes. The figure should have exactly ${systematicAccessories.length} accessories: ${systematicAccessories.join(', ')} (all as miniature toy versions in packaging). ${finalBonusAccessory ? `The ${finalBonusAccessory} must be physically worn or held by the action figure. ` : ''}No extra items or text. Show the full body, including feet. Professional toy product photography, studio lighting, highly detailed.`;
+      fallbackPrompt += ` Dark professional casual clothing, wearing appropriate shoes. The figure should have exactly ${systematicAccessories.length} accessories: ${systematicAccessories.join(', ')} (all as miniature toy versions in packaging). ${finalBonusAccessory ? `CRITICAL: The action figure must be actively wearing or holding the ${finalBonusAccessory} - this is essential. ` : ''}No extra items or text. Show the full body, including feet. Professional toy product photography, studio lighting, highly detailed.`;
       dallePrompt = fallbackPrompt;
     }
     
