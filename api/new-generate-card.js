@@ -476,9 +476,17 @@ async function processUploadedImage(file) {
   if (!file) return null;
 
   try {
+    console.log('Processing uploaded image:', {
+      filename: file.filename,
+      mimetype: file.mimetype,
+      size: file.size,
+      path: file.path
+    });
+
     // Read the file as base64
     const imageBuffer = fs.readFileSync(file.path);
     const base64Image = imageBuffer.toString('base64');
+    console.log('Image converted to base64, length:', base64Image.length);
 
     // Use OpenAI Vision to analyze the uploaded photo
     console.log('Analyzing uploaded photo with OpenAI Vision...');
@@ -592,6 +600,13 @@ async function generateDallEImage(prompt, retries = 3) {
 router.post('/generate-card', upload.single('image'), async (req, res) => {
   try {
     console.log('Received request:', req.body);
+    console.log('Uploaded file:', req.file ? {
+      filename: req.file.filename,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path
+    } : 'No file uploaded');
+
     const { role, painPoint, crmPersonality, email, bonusAccessory, customPainPoint, customAccessory } = req.body;
     const uploadedImage = req.file ? await processUploadedImage(req.file) : null;
 

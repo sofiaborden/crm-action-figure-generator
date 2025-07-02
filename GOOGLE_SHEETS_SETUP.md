@@ -40,7 +40,7 @@ This guide will help you set up automatic Google Sheets integration for your CRM
 5. Add the service account email with **Editor** permissions
 6. Click **Send**
 
-### Step 6: Add Environment Variables
+c
 Add these to your `.env` file (extract from the JSON file):
 
 ```env
