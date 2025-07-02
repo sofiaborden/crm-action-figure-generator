@@ -193,6 +193,19 @@ const ACCESSORY_MAPPINGS = {
     'Poor customer support': 'phone',
     'Expensive pricing': 'money bag',
     'Other': 'coffee mug'
+  },
+  bonusAccessories: {
+    'Baseball Cap': 'baseball cap',
+    'Sunglasses': 'sunglasses',
+    'Coffee Mug': 'coffee mug',
+    'Smartphone': 'smartphone',
+    'Backpack': 'backpack',
+    'Watch': 'wristwatch',
+    'Headphones': 'headphones',
+    'Water Bottle': 'water bottle',
+    'Notebook': 'notebook',
+    'Pen': 'pen',
+    'Other': 'small accessory'
   }
 };
 
@@ -213,6 +226,7 @@ const writer = csvWriter({
     {id: 'role', title: 'ROLE'},
     {id: 'painPoint', title: 'PAIN_POINT'},
     {id: 'crmPersonality', title: 'CRM_PERSONALITY'},
+    {id: 'bonusAccessory', title: 'BONUS_ACCESSORY'},
     {id: 'genderPreference', title: 'DETECTED_GENDER'},
     {id: 'title', title: 'GENERATED_TITLE'},
     {id: 'quote', title: 'GENERATED_QUOTE'},
@@ -578,7 +592,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       path: req.file.path
     } : 'No file uploaded');
 
-    const { role, painPoint, crmPersonality, email, name, customPainPoint } = req.body;
+    const { role, painPoint, crmPersonality, email, name, customPainPoint, bonusAccessory, customAccessory } = req.body;
     const uploadedImage = req.file ? await processUploadedImage(req.file) : null;
 
     // Use detected gender from image analysis, or default to ambiguous
@@ -586,6 +600,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
 
     // Handle custom fields
     const finalPainPoint = painPoint === 'Other' ? customPainPoint : painPoint;
+    const finalBonusAccessory = bonusAccessory === 'Other' ? customAccessory : bonusAccessory;
 
     if (!role || !finalPainPoint || !crmPersonality || !email || !name) {
       return res.status(400).json({
@@ -690,15 +705,16 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             - "${persona.title}" (smaller text below)
             - NO other text anywhere on the package
 
-            ACCESSORIES (exactly 3 items):
+            ACCESSORIES (exactly ${finalBonusAccessory ? '4' : '3'} items):
             1. ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}
             2. ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}
-            3. ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}
+            3. ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `
+            4. ${ACCESSORY_MAPPINGS.bonusAccessories[finalBonusAccessory] || finalBonusAccessory}` : ''}
 
             APPEARANCE: ${uploadedImage && uploadedImage.description ? uploadedImage.description : 'Professional person'}
 
             Create this exact prompt:
-            "Action figure in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: 'Julep Confessionals' at top and '${persona.title}' below. NO other text. Full-body figure with professional clothing. Exactly 3 small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}. Professional toy photography."
+            "Action figure in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: 'Julep Confessionals' at top and '${persona.title}' below. NO other text. Full-body figure with professional clothing. Exactly ${finalBonusAccessory ? '4' : '3'} small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `, ${ACCESSORY_MAPPINGS.bonusAccessories[finalBonusAccessory] || finalBonusAccessory}` : ''}. Professional toy photography."
 
             Return only the prompt, no quotation marks.`
           }
@@ -713,7 +729,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       console.error('Error generating DALL-E prompt:', promptError);
 
       // Simple fallback prompt with strict text requirements
-      let fallbackPrompt = `Action figure in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: "Julep Confessionals" at top and "${persona.title}" below. NO other text anywhere. Full-body figure with professional clothing. Exactly 3 small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}. Professional toy photography.`;
+      let fallbackPrompt = `Action figure in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: "Julep Confessionals" at top and "${persona.title}" below. NO other text anywhere. Full-body figure with professional clothing. Exactly ${finalBonusAccessory ? '4' : '3'} small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `, ${ACCESSORY_MAPPINGS.bonusAccessories[finalBonusAccessory] || finalBonusAccessory}` : ''}. Professional toy photography.`;
       dallePrompt = fallbackPrompt;
     }
     
@@ -734,6 +750,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       role,
       painPoint: finalPainPoint,
       crmPersonality,
+      bonusAccessory: finalBonusAccessory || '',
       genderPreference,
 
       title: persona.title,

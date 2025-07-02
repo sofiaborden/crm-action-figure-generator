@@ -653,12 +653,36 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="bonusAccessory">Bonus Fun Accessory (Optional):</label>
+                        <select id="bonusAccessory" name="bonusAccessory">
+                            <option value="">Choose a fun accessory...</option>
+                            <option value="Baseball Cap">Baseball Cap</option>
+                            <option value="Sunglasses">Sunglasses</option>
+                            <option value="Coffee Mug">Coffee Mug</option>
+                            <option value="Smartphone">Smartphone</option>
+                            <option value="Backpack">Backpack</option>
+                            <option value="Watch">Watch</option>
+                            <option value="Headphones">Headphones</option>
+                            <option value="Water Bottle">Water Bottle</option>
+                            <option value="Notebook">Notebook</option>
+                            <option value="Pen">Pen</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
                 </div>
 
             <div class="form-group full-width" id="customPainPointGroup" style="display: none;">
                 <label for="customPainPoint">Describe your pain point (max 100 characters):</label>
                 <input type="text" id="customPainPoint" name="customPainPoint" maxlength="100" placeholder="What specific issue drives you crazy?">
                 <small id="charCount">0/100 characters</small>
+            </div>
+
+            <div class="form-group full-width" id="customAccessoryGroup" style="display: none;">
+                <label for="customAccessory">Describe your accessory (max 50 characters):</label>
+                <input type="text" id="customAccessory" name="customAccessory" maxlength="50" placeholder="What fun accessory would you like?">
+                <small id="accessoryCharCount">0/50 characters</small>
             </div>
 
             <div class="form-group full-width">
@@ -790,6 +814,34 @@
             }
         });
 
+        // Bonus accessory custom field handling
+        const bonusAccessorySelect = document.getElementById('bonusAccessory');
+        const customAccessoryGroup = document.getElementById('customAccessoryGroup');
+        const customAccessoryInput = document.getElementById('customAccessory');
+        const accessoryCharCount = document.getElementById('accessoryCharCount');
+
+        bonusAccessorySelect.addEventListener('change', function(e) {
+            if (e.target.value === 'Other') {
+                customAccessoryGroup.style.display = 'block';
+                customAccessoryInput.required = true;
+            } else {
+                customAccessoryGroup.style.display = 'none';
+                customAccessoryInput.required = false;
+                customAccessoryInput.value = '';
+                accessoryCharCount.textContent = '0/50 characters';
+            }
+        });
+
+        customAccessoryInput.addEventListener('input', function(e) {
+            const length = e.target.value.length;
+            accessoryCharCount.textContent = `${length}/50 characters`;
+            if (length > 40) {
+                accessoryCharCount.style.color = 'var(--danger-color)';
+            } else {
+                accessoryCharCount.style.color = '#6b7280';
+            }
+        });
+
 
 
         // Form submission
@@ -801,6 +853,11 @@
             // Handle custom pain point
             if (painPointSelect.value === 'Other' && customPainPointInput.value.trim()) {
                 formData.set('painPoint', customPainPointInput.value.trim());
+            }
+
+            // Handle custom bonus accessory
+            if (bonusAccessorySelect.value === 'Other' && customAccessoryInput.value.trim()) {
+                formData.set('bonusAccessory', customAccessoryInput.value.trim());
             }
 
             const submitBtn = document.querySelector('.generate-btn');
