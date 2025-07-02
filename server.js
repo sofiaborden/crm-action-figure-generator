@@ -5,7 +5,18 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 10000;
+
+// Add error handling for uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
 
 // Middleware
 app.use(bodyParser.json());
@@ -22,6 +33,19 @@ console.log('Router has stack?', !!generateCardRouter.stack);
 
 // Use the router
 app.use('/api', generateCardRouter);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    port: port,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'SET' : 'NOT_SET'
+    }
+  });
+});
 
 // Start the server
 app.listen(port, () => {
