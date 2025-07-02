@@ -228,6 +228,7 @@ const writer = csvWriter({
     {id: 'crmPersonality', title: 'CRM_PERSONALITY'},
     {id: 'bonusAccessory', title: 'BONUS_ACCESSORY'},
     {id: 'genderPreference', title: 'DETECTED_GENDER'},
+    {id: 'peopleCount', title: 'PEOPLE_COUNT'},
     {id: 'title', title: 'GENERATED_TITLE'},
     {id: 'quote', title: 'GENERATED_QUOTE'},
     {id: 'driveFileId', title: 'DRIVE_FILE_ID'},
@@ -508,11 +509,19 @@ async function processUploadedImage(file) {
       detectedGender = 'female';
     }
 
+    // Extract people count from the analysis
+    let peopleCount = 1; // Default to single person
+    const peopleCountMatch = photoDescription.match(/people count:\s*(\d+)/i);
+    if (peopleCountMatch) {
+      peopleCount = parseInt(peopleCountMatch[1]);
+    }
+
     return {
       path: file.path,
       base64: base64Image,
       description: photoDescription,
-      detectedGender: detectedGender
+      detectedGender: detectedGender,
+      peopleCount: peopleCount
     };
   } catch (error) {
     console.error('Error processing uploaded image:', error);
@@ -694,6 +703,11 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
             FIGURE: Full body visible, professional appearance
             ACCESSORIES: Exactly 3 small toy items from provided list
 
+            CRITICAL FIGURE COUNT RULE:
+            - If uploaded image shows 1 person: Create EXACTLY 1 action figure
+            - If uploaded image shows multiple people: Create multiple action figures matching the count
+            - If no image uploaded: Create EXACTLY 1 action figure
+
             FORBIDDEN: Extra text, misspellings, random words, weapons, alcohol`
           },
           {
@@ -713,8 +727,10 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
 
             APPEARANCE: ${uploadedImage && uploadedImage.description ? uploadedImage.description : 'Professional person'}
 
+            FIGURE COUNT: ${uploadedImage && uploadedImage.peopleCount ? uploadedImage.peopleCount : 1} ${uploadedImage && uploadedImage.peopleCount > 1 ? 'action figures' : 'action figure'}
+
             Create this exact prompt:
-            "Action figure in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: 'Julep Confessionals' at top and '${persona.title}' below. NO other text. Full-body figure with professional clothing. Exactly ${finalBonusAccessory ? '4' : '3'} small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `, ${ACCESSORY_MAPPINGS.bonusAccessories[finalBonusAccessory] || finalBonusAccessory}` : ''}. Professional toy photography."
+            "Action figure${uploadedImage && uploadedImage.peopleCount > 1 ? 's' : ''} in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: 'Julep Confessionals' at top and '${persona.title}' below. NO other text. ${uploadedImage && uploadedImage.peopleCount > 1 ? `Exactly ${uploadedImage.peopleCount} full-body figures` : 'Single full-body figure'} with professional clothing. Exactly ${finalBonusAccessory ? '4' : '3'} small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `, ${ACCESSORY_MAPPINGS.bonusAccessories[finalBonusAccessory] || finalBonusAccessory}` : ''}. Professional toy photography."
 
             Return only the prompt, no quotation marks.`
           }
@@ -728,8 +744,12 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
     } catch (promptError) {
       console.error('Error generating DALL-E prompt:', promptError);
 
-      // Simple fallback prompt with strict text requirements
-      let fallbackPrompt = `Action figure in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: "Julep Confessionals" at top and "${persona.title}" below. NO other text anywhere. Full-body figure with professional clothing. Exactly ${finalBonusAccessory ? '4' : '3'} small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `, ${ACCESSORY_MAPPINGS.bonusAccessories[finalBonusAccessory] || finalBonusAccessory}` : ''}. Professional toy photography.`;
+      // Simple fallback prompt with strict text requirements and people count
+      const figureCount = uploadedImage && uploadedImage.peopleCount ? uploadedImage.peopleCount : 1;
+      const figureText = figureCount > 1 ? `Exactly ${figureCount} full-body figures` : 'Single full-body figure';
+      const pluralSuffix = figureCount > 1 ? 's' : '';
+
+      let fallbackPrompt = `Action figure${pluralSuffix} in clear plastic blister packaging with #32859a blue background. ONLY these words on package in white bold text: "Julep Confessionals" at top and "${persona.title}" below. NO other text anywhere. ${figureText} with professional clothing. Exactly ${finalBonusAccessory ? '4' : '3'} small toy accessories: ${ACCESSORY_MAPPINGS.roles[role] || 'work folder'}, ${ACCESSORY_MAPPINGS.personalities[crmPersonality] || 'clipboard'}, ${ACCESSORY_MAPPINGS.painPoints[finalPainPoint] || 'help manual'}${finalBonusAccessory ? `, ${ACCESSORY_MAPPINGS.bonusAccessories[finalBonusAccessory] || finalBonusAccessory}` : ''}. Professional toy photography.`;
       dallePrompt = fallbackPrompt;
     }
     
@@ -752,7 +772,7 @@ router.post('/generate-card', upload.single('image'), async (req, res) => {
       crmPersonality,
       bonusAccessory: finalBonusAccessory || '',
       genderPreference,
-
+      peopleCount: uploadedImage?.peopleCount || 1,
       title: persona.title,
       quote: persona.quote,
       driveFileId: driveResult?.fileId || '',
